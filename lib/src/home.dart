@@ -3,109 +3,97 @@ import 'package:flutter/material.dart';
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('숭민청원'),
-        backgroundColor: Color(0xff87ceeb),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          prefixIcon: Icon(Icons.filter_list),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.filter_list),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 10),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Row(
-                  children: [
-                    Radio(value: 0, groupValue: 0, onChanged: (int? value) {}),
-                    Text('최다동의순'),
+                    ),
                   ],
                 ),
-                Row(
-                  children: [
-                    Radio(value: 1, groupValue: 0, onChanged: (int? value) {}),
-                    Text('만료임박순'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Radio(value: 2, groupValue: 0, onChanged: (int? value) {}),
-                    Text('최신순'),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              SizedBox(width: 10),
+            ],
           ),
-          Expanded(
-            child: ListView(
-              children: [
-                PetitionCard(
-                  title: '도서관 에어컨',
-                  description: '도서관 에어컨 너무 약해요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
-                ),
-                PetitionCard(
-                  title: '도서관 화장실',
-                  description: '화장실이 너무 더러워요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
-                ),
-                PetitionCard(
-                  title: '도서관 자리',
-                  description: '시험기간에 반납이 안됩니다ㅠ',
-                  category: '시설',
-                  agreement: 80,
-                  disagreement: 20,
-                ),
-              ],
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Row(
+                children: [
+                  Radio(value: 0, groupValue: 0, onChanged: (int? value) {}),
+                  Text('최다동의순'),
+                ],
+              ),
+              Row(
+                children: [
+                  Radio(value: 1, groupValue: 0, onChanged: (int? value) {}),
+                  Text('만료임박순'),
+                ],
+              ),
+              Row(
+                children: [
+                  Radio(value: 2, groupValue: 0, onChanged: (int? value) {}),
+                  Text('최신순'),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: ListView(
+            children: [
+              PetitionCard(
+                title: '도서관 에어컨',
+                description: '도서관 에어컨 너무 약해요',
+                category: '시설',
+                agreement: 70,
+                disagreement: 30,
+              ),
+              PetitionCard(
+                title: '도서관 화장실',
+                description: '화장실이 너무 더러워요',
+                category: '시설',
+                agreement: 70,
+                disagreement: 30,
+              ),
+              PetitionCard(
+                title: '도서관 자리',
+                description: '시험기간에 반납이 안됩니다ㅠ',
+                category: '시설',
+                agreement: 80,
+                disagreement: 20,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -69,7 +69,7 @@ class LoginMain extends StatelessWidget {
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            context.go('/home');
+                            context.go('/main');
                           },
                           child: Text('U-Saint 로그인'),
                         ),
