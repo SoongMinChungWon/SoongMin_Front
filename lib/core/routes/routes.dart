@@ -5,6 +5,7 @@ import 'package:sw/src/bottom_nav.dart';
 import 'package:sw/src/LoginMian.dart';
 import 'package:sw/src/Main_Screen.dart';
 import 'package:sw/src/home.dart';
+import 'package:sw/src/wait.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final ValueNotifier<bool> refreshNotifier = ValueNotifier<bool>(false);
@@ -22,6 +23,14 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/main',
       builder: (context, state) => MainScreen(),
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => Home(),
+    ),
+    GoRoute(
+      path: '/wait',
+      builder: (context, state) => Wait(),
     ),
   ],
 );

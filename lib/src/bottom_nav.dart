@@ -27,6 +27,7 @@ class _BottomBarState extends ConsumerState<BottomNav> {
   Widget build(BuildContext context) {
     final navStateNotifier = ref.watch(navStateProvider.notifier);
     return Scaffold(
+      body: Home(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           context.go('/');
@@ -49,16 +50,19 @@ class _BottomBarState extends ConsumerState<BottomNav> {
             switch (index) {
               case 0:
                 navStateNotifier.updateTitle('동의 진행중');
-                context.push('/home');
+                context.push('/wait');
                 break;
               case 1:
                 navStateNotifier.updateTitle('답변 대기');
+                context.push('/wait');
                 break;
               case 2:
                 navStateNotifier.updateTitle('답변 완료');
+                context.push('/wait');
                 break;
               case 3:
                 navStateNotifier.updateTitle('마이페이지');
+                context.push('/wait');
                 break;
             }
           });

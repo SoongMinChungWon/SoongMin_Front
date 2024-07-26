@@ -8,11 +8,9 @@ class MainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final navState = ref.watch(navStateProvider);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(navState.title),
+        title: Text('숭민청원'),
         backgroundColor: Color(0xff87ceeb),
         actions: [
           IconButton(
