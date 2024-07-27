@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sw/core/provider/nav_provider.dart';
 
-class Home extends StatelessWidget {
+class Home extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('숭민청원'),
-        backgroundColor: Color(0xff87ceeb),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
