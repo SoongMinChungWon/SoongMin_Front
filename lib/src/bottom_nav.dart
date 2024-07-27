@@ -62,7 +62,7 @@ class _BottomBarState extends ConsumerState<BottomNav> {
                 break;
               case 3:
                 navStateNotifier.updateTitle('마이페이지');
-                context.push('/wait');
+                context.push('/mypage');
                 break;
             }
           });

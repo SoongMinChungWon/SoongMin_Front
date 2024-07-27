@@ -23,6 +23,7 @@ permission_handler_android=/Users/kimjunha/.pub-cache/hosted/pub.dev/permission_
 permission_handler_apple=/Users/kimjunha/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.5/
 permission_handler_html=/Users/kimjunha/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.1/
 permission_handler_windows=/Users/kimjunha/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1/
+sqflite=/Users/kimjunha/.pub-cache/hosted/pub.dev/sqflite-2.3.3+1/
 url_launcher=/Users/kimjunha/.pub-cache/hosted/pub.dev/url_launcher-6.3.0/
 url_launcher_android=/Users/kimjunha/.pub-cache/hosted/pub.dev/url_launcher_android-6.3.5/
 url_launcher_ios=/Users/kimjunha/.pub-cache/hosted/pub.dev/url_launcher_ios-6.3.1/
