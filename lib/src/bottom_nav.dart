@@ -30,7 +30,7 @@ class _BottomBarState extends ConsumerState<BottomNav> {
       body: Home(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.go('/');
+          context.push('/create');
         },
         backgroundColor: Colors.green,
         child: Icon(Icons.add, color: Colors.white, size: 40),
@@ -49,19 +49,23 @@ class _BottomBarState extends ConsumerState<BottomNav> {
             _activeIndex = index;
             switch (index) {
               case 0:
-                navStateNotifier.updateTitle('동의 진행중');
-                context.push('/wait');
+                navStateNotifier.updateTitle('동의중인 청원');
+                ref.read(filterProvider.notifier).state = 0;
+                context.push('/proceeding');
                 break;
               case 1:
-                navStateNotifier.updateTitle('답변 대기');
+                navStateNotifier.updateTitle('답변 대기 청원');
+                ref.read(filterProvider.notifier).state = 0;
                 context.push('/wait');
                 break;
               case 2:
-                navStateNotifier.updateTitle('답변 완료');
-                context.push('/wait');
+                navStateNotifier.updateTitle('답변 완료 청원');
+                ref.read(filterProvider.notifier).state = 0;
+                context.push('/complete');
                 break;
               case 3:
                 navStateNotifier.updateTitle('마이페이지');
+                ref.read(filterProvider.notifier).state = 0;
                 context.push('/mypage');
                 break;
             }

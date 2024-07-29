@@ -1,48 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sw/core/provider/nav_provider.dart';
+import 'package:sw/src/custom_drawer.dart';
 
 class Wait extends ConsumerWidget {
+  final GlobalKey<ScaffoldState> _scaffoldKey1 = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navState = ref.watch(navStateProvider);
+
     return Scaffold(
+      key: _scaffoldKey1, // Scaffold의 키로 설정
       appBar: AppBar(
-        title: Text(navState.title),
+        title: Text(
+          navState.title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Color(0xff87ceeb),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            ref.read(filterProvider.notifier).state = 0;
+            context.pop();
+          },
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications),
-            onPressed: () {},
+            onPressed: () {
+              _scaffoldKey1.currentState?.openEndDrawer();
+            },
           ),
         ],
       ),
+      endDrawer: CustomDrawer(),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Row(
+            child: Consumer(
+              builder: (context, ref, child) {
+                final selectedFilter = ref.watch(filterProvider);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Radio(value: 0, groupValue: 0, onChanged: (int? value) {}),
-                    Text('최다동의순'),
+                    Row(
+                      children: [
+                        Radio<int>(
+                          value: 0,
+                          groupValue: selectedFilter,
+                          onChanged: (int? value) {
+                            ref.read(filterProvider.notifier).state = value!;
+                          },
+                        ),
+                        Text('최다동의순'),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Radio<int>(
+                          value: 1,
+                          groupValue: selectedFilter,
+                          onChanged: (int? value) {
+                            ref.read(filterProvider.notifier).state = value!;
+                          },
+                        ),
+                        Text('만료임박순'),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Radio<int>(
+                          value: 2,
+                          groupValue: selectedFilter,
+                          onChanged: (int? value) {
+                            ref.read(filterProvider.notifier).state = value!;
+                          },
+                        ),
+                        Text('최신순'),
+                      ],
+                    ),
                   ],
-                ),
-                Row(
-                  children: [
-                    Radio(value: 1, groupValue: 0, onChanged: (int? value) {}),
-                    Text('만료임박순'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Radio(value: 2, groupValue: 0, onChanged: (int? value) {}),
-                    Text('최신순'),
-                  ],
-                ),
-              ],
+                );
+              },
             ),
           ),
           Expanded(
@@ -120,25 +162,25 @@ class PetitionCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.thumb_up, color: Colors.blue),
+                    Icon(Icons.thumb_down, color: Colors.red),
                     SizedBox(width: 5),
-                    Text('$agreement%'),
+                    Text('$disagreement%'),
                   ],
                 ),
                 Row(
                   children: [
-                    Icon(Icons.thumb_down, color: Colors.red),
+                    Icon(Icons.thumb_up, color: Colors.blue),
                     SizedBox(width: 5),
-                    Text('$disagreement%'),
+                    Text('$agreement%'),
                   ],
                 ),
               ],
             ),
             SizedBox(height: 8),
             LinearProgressIndicator(
-              value: agreement / 100,
-              backgroundColor: Colors.red,
-              color: Colors.blue,
+              value: disagreement / 100,
+              backgroundColor: Colors.blue,
+              color: Colors.red,
             ),
           ],
         ),
@@ -146,3 +188,6 @@ class PetitionCard extends StatelessWidget {
     );
   }
 }
+
+// 상태 제공자 정의
+final filterProvider = StateProvider<int>((ref) => 0);
