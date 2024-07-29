@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
 class MyPage extends StatelessWidget {
   @override
@@ -17,7 +18,7 @@ class MyPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Handle notification button press
+              context.go('/postdetailscreen');
             },
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter/material.dart';
 import 'package:sw/src/MyPage.dart';
+import 'package:sw/src/PostDetailScreen.dart';
 import 'package:sw/src/bottom_nav.dart';
 import 'package:sw/src/LoginMian.dart';
 import 'package:sw/src/Main_Screen.dart';
@@ -37,6 +38,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/mypage',
       builder: (context, state) => MyPage(),
+    ),
+    GoRoute(
+      path: '/postdetailscreen',
+      builder: (context, state) => PostDetailScreen(),
     ),
   ],
 );
