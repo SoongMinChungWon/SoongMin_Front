@@ -1,92 +1,168 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sw/core/provider/nav_provider.dart';
+import 'package:sw/src/custom_drawer.dart';
+import 'package:sw/src/home.dart';
 
-class MyPage extends StatelessWidget {
+class MyPage extends ConsumerWidget {
+  // GlobalKey를 사용하여 Scaffold의 상태를 관리
+  final GlobalKey<ScaffoldState> _scaffoldKey3 = GlobalKey<ScaffoldState>();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navState = ref.watch(navStateProvider);
     return Scaffold(
+      key: _scaffoldKey3, // Scaffold의 key로 설정
       appBar: AppBar(
-        title: Text('승민청원'),
+        title: Text(
+          navState.title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Handle back button press
+            ref.read(filterProvider.notifier).state = 0;
+            context.pop();
           },
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              context.go('/postdetailscreen');
+              // Notification 버튼을 눌렀을 때 오른쪽에서 Drawer 열기
+              _scaffoldKey3.currentState?.openEndDrawer();
             },
           ),
         ],
-        backgroundColor: Colors.lightBlue,
+        backgroundColor: Color(0xff87ceeb),
       ),
+      endDrawer: CustomDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                radius: 30,
-                backgroundImage: CachedNetworkImageProvider(
-                  'https://example.com/profile.jpg', // Replace with actual profile image URL
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  child: const Icon(Icons.person),
+                  backgroundColor: Colors.white,
+                ),
+                SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '컴퓨터학부',
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    ),
+                    Text(
+                      '대우혁',
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '학번 / ',
+                          style: TextStyle(color: Colors.black, fontSize: 16),
+                        ),
+                        Text(
+                          '20201830',
+                          style: TextStyle(color: Colors.black, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                context.push('/mypage/mypost');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff22C55E),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              title: Text('대우혁'),
-              subtitle: Text('컴퓨터학부\n학번 / 20201830'),
+              child: const Text(
+                '내가 쓴 청원',
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700),
+              ),
             ),
-            SizedBox(height: 20),
-            buildMenuButton('내가 쓴 글', Colors.green),
-            SizedBox(height: 10),
-            buildMenuButton('내 토론장', Colors.cyan),
-            SizedBox(height: 10),
-            buildMenuButton('내가 동의한 글', Colors.lightBlue),
-            Spacer(),
-            logoutButton(),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                context.push('/mypage/participants');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff08F3E7),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: const Text(
+                '내가 참여한 청원',
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                context.push('/mypage/agreement');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff87CEEB),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: const Text(
+                '내가 동의한 청원',
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700),
+              ),
+            ),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: () {
+                context.go('/');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: const Text(
+                '로그아웃',
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700),
+              ),
+            )
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildMenuButton(String text, Color color) {
-    return ElevatedButton(
-      onPressed: () {
-        // Handle button press
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        minimumSize: Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 18),
-      ),
-    );
-  }
-
-  Widget logoutButton() {
-    return ElevatedButton(
-      onPressed: () {
-        // Handle logout button press
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red,
-        minimumSize: Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Text(
-        '로그아웃',
-        style: TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
