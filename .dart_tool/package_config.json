@@ -308,6 +308,12 @@
       "languageVersion": "2.19"
     },
     {
+      "name": "flutter_hooks",
+      "rootUri": "file:///Users/kimjunha/.pub-cache/hosted/pub.dev/flutter_hooks-0.20.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
       "name": "flutter_launcher_icons",
       "rootUri": "file:///Users/kimjunha/.pub-cache/hosted/pub.dev/flutter_launcher_icons-0.13.1",
       "packageUri": "lib/",
@@ -1082,7 +1088,7 @@
       "languageVersion": "3.4"
     }
   ],
-  "generated": "2024-07-27T15:37:34.684877Z",
+  "generated": "2024-07-30T16:27:40.940588Z",
   "generator": "pub",
   "generatorVersion": "3.4.3",
   "flutterRoot": "file:///Users/kimjunha/coding/flutter",

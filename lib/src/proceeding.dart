@@ -1,27 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sw/core/provider/nav_provider.dart';
-import 'package:sw/src/custom_drawer.dart';
-import 'package:sw/src/home.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class Proceeding extends ConsumerWidget {
-  final GlobalKey<ScaffoldState> _scaffoldKey2 = GlobalKey<ScaffoldState>();
+class Petition {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
+  final String title;
+  final String content;
+  final int participants;
+  final int agree;
+  final int disagree;
+
+  Petition({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
+    required this.title,
+    required this.content,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
+  });
+
+  factory Petition.fromJson(Map<String, dynamic> json) {
+    return Petition(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
+      title: json['title'],
+      content: json['content'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
+    );
+  }
+}
+
+class Proceeding extends StatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final navState = ref.watch(navStateProvider);
+  _ProceedingState createState() => _ProceedingState();
+}
+
+class _ProceedingState extends State<Proceeding> {
+  final GlobalKey<ScaffoldState> _scaffoldKey2 = GlobalKey<ScaffoldState>();
+  int selectedFilter = 0;
+  List<Petition> posts = [];
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts(selectedFilter);
+  }
+
+  Future<void> fetchPosts(int filter) async {
+    setState(() {
+      isLoading = true;
+      hasError = false;
+    });
+
+    String filterState;
+    switch (filter) {
+      case 1:
+        filterState = 'agree';
+        break;
+      case 2:
+        filterState = 'expiry';
+        break;
+      default:
+        filterState = 'createdDate';
+    }
+
+    try {
+      final response = await http.get(Uri.parse(
+          'http://52.79.169.32:8080/api/posts/sorted/$filterState/state1'));
+      if (response.statusCode == 200) {
+        List<dynamic> data =
+            jsonDecode(utf8.decode(response.bodyBytes)); // UTF-8로 디코딩
+        setState(() {
+          posts = data.map((json) => Petition.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey2,
       appBar: AppBar(
         title: Text(
-          navState.title,
+          '답변 중인 청원',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            ref.read(filterProvider.notifier).state = 0;
             context.pop();
           },
         ),
@@ -29,93 +121,113 @@ class Proceeding extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Notification 버튼을 눌렀을 때 오른쪽에서 Drawer 열기
               _scaffoldKey2.currentState?.openEndDrawer();
             },
           ),
         ],
       ),
-      endDrawer: CustomDrawer(),
+      endDrawer: Drawer(), // CustomDrawer 사용을 고려하세요.
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Consumer(
-              builder: (context, ref, child) {
-                final selectedFilter = ref.watch(filterProvider);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 0,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('최다동의순'),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 1,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('만료임박순'),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 2,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('최신순'),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          Expanded(
-            child: ListView(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                PetitionCard(
-                  title: '도서관 에어컨',
-                  description: '도서관 에어컨 너무 약해요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
+                FilterRadio(
+                  value: 0,
+                  groupValue: selectedFilter,
+                  label: '최다동의순',
+                  onChanged: (value) {
+                    setState(() {
+                      selectedFilter = value;
+                    });
+                    fetchPosts(value);
+                  },
                 ),
-                PetitionCard(
-                  title: '도서관 화장실',
-                  description: '화장실이 너무 더러워요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
+                FilterRadio(
+                  value: 1,
+                  groupValue: selectedFilter,
+                  label: '만료임박순',
+                  onChanged: (value) {
+                    setState(() {
+                      selectedFilter = value;
+                    });
+                    fetchPosts(value);
+                  },
                 ),
-                PetitionCard(
-                  title: '도서관 자리',
-                  description: '시험기간에 반납이 안됩니다ㅠ',
-                  category: '시설',
-                  agreement: 80,
-                  disagreement: 20,
+                FilterRadio(
+                  value: 2,
+                  groupValue: selectedFilter,
+                  label: '최신순',
+                  onChanged: (value) {
+                    setState(() {
+                      selectedFilter = value;
+                    });
+                    fetchPosts(value);
+                  },
                 ),
               ],
             ),
           ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                fetchPosts(selectedFilter);
+              },
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : hasError
+                      ? Center(child: Text('Error loading posts'))
+                      : ListView.builder(
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) {
+                            final petition = posts[index];
+                            return PetitionCard(
+                              title: petition.title,
+                              description: petition.content,
+                              category: petition.postCategory,
+                              agreement: petition.agree,
+                              disagreement: petition.disagree,
+                            );
+                          },
+                        ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class FilterRadio extends StatelessWidget {
+  final int value;
+  final int groupValue;
+  final String label;
+  final ValueChanged<int> onChanged;
+
+  const FilterRadio({
+    required this.value,
+    required this.groupValue,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Radio<int>(
+          value: value,
+          groupValue: groupValue,
+          onChanged: (int? newValue) {
+            if (newValue != null) {
+              onChanged(newValue);
+            }
+          },
+        ),
+        Text(label),
+      ],
     );
   }
 }
