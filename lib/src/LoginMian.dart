@@ -1,20 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class LoginMain extends StatelessWidget {
+import 'package:sw/core/provider/login_provider.dart';
+
+class LoginMain extends ConsumerWidget {
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _login(BuildContext context, WidgetRef ref) async {
+    final String id = _idController.text;
+    final String password = _passwordController.text;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://52.79.169.32:8080/api/login'), // 서버 URL로 변경
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, String>{
+          'id': id,
+          'password': password,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+      final user = User.fromJson(responseData);
+      // // 로그인 성공 시 상태 업데이트
+      print(responseData);
+      ref.read(loginProvider.notifier).setUser(user);
+
+      if (response.statusCode == 200) {
+        // 로그인 성공, 메인 페이지로 이동
+        context.go('/main');
+      } else {
+        // 로그인 실패 처리
+        print('로그인 실패: ${response.reasonPhrase}');
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('로그인 실패'),
+            content: Text('자격 증명을 확인하고 다시 시도하세요.\n상세 정보: ${response.body}'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('확인'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('에러 발생: $e');
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
+          // 배경 이미지
           Positioned.fill(
             child: Image.asset(
-              'assets/images/loginLogo.png', // Replace with your image path
+              'assets/images/loginLogo.png', // 이미지 경로 변경
               fit: BoxFit.cover,
             ),
           ),
-          // Content
+          // 내용
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -45,6 +100,7 @@ class LoginMain extends StatelessWidget {
                     child: Column(
                       children: [
                         TextField(
+                          controller: _idController,
                           decoration: InputDecoration(
                             hintText: 'U-Saint ID로 입력하세요',
                             hintStyle: TextStyle(color: Colors.grey),
@@ -56,6 +112,7 @@ class LoginMain extends StatelessWidget {
                         ),
                         SizedBox(height: 20),
                         TextField(
+                          controller: _passwordController,
                           decoration: InputDecoration(
                             hintText: 'U-Saint PW로 입력하세요',
                             hintStyle: TextStyle(color: Colors.grey),
@@ -69,7 +126,7 @@ class LoginMain extends StatelessWidget {
                         SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            context.go('/main');
+                            _login(context, ref);
                           },
                           child: Text('U-Saint 로그인'),
                         ),

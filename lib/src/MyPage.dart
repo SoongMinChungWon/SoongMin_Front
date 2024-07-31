@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sw/core/provider/login_provider.dart';
 import 'package:sw/core/provider/nav_provider.dart';
 import 'package:sw/src/custom_drawer.dart';
 import 'package:sw/src/home.dart';
@@ -12,6 +13,7 @@ class MyPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navState = ref.watch(navStateProvider);
+    final loginInfo = ref.read(loginProvider);
     return Scaffold(
       key: _scaffoldKey3, // Scaffold의 key로 설정
       appBar: AppBar(
@@ -59,7 +61,7 @@ class MyPage extends ConsumerWidget {
                       style: TextStyle(color: Colors.black, fontSize: 16),
                     ),
                     Text(
-                      '대우혁',
+                      '김준하',
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 20,
@@ -72,7 +74,7 @@ class MyPage extends ConsumerWidget {
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                         Text(
-                          '20201830',
+                          loginInfo!.loginId,
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                       ],
