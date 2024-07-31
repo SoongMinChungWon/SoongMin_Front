@@ -2,12 +2,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter/material.dart';
 import 'package:sw/src/MyPage.dart';
-<<<<<<< HEAD
-import 'package:sw/src/PostDetailScreen.dart';
-import 'package:sw/src/bottom_nav.dart';
-=======
-
->>>>>>> cf45f02c991ed073ad9ca4b9af7f749471baeae7
 import 'package:sw/src/LoginMian.dart';
 import 'package:sw/src/Main_Screen.dart';
 import 'package:sw/src/ai.dart';
@@ -59,10 +53,6 @@ final GoRouter router = GoRouter(
       builder: (context, state) => MyPage(),
     ),
     GoRoute(
-<<<<<<< HEAD
-      path: '/postdetailscreen',
-      builder: (context, state) => PostDetailScreen(),
-=======
       path: '/mypage/mypost',
       builder: (context, state) => MyPost(),
     ),
@@ -85,7 +75,6 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/search',
       builder: (context, state) => Search(),
->>>>>>> cf45f02c991ed073ad9ca4b9af7f749471baeae7
     ),
   ],
 );

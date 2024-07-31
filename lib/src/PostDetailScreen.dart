@@ -1,162 +1,63 @@
-// import 'package:flutter/material.dart';
-
-// class PostDetailScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: Colors.lightBlue,
-//         leading: IconButton(
-//           icon: Icon(Icons.arrow_back),
-//           onPressed: () {
-//             // Handle back button press
-//           },
-//         ),
-//         title: Text('청원글'),
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.notifications),
-//             onPressed: () {
-//               // Handle notification button press
-//             },
-//           ),
-//         ],
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(
-//               '도서관 에어컨',
-//               style: TextStyle(
-//                 fontSize: 20,
-//                 fontWeight: FontWeight.bold,
-//               ),
-//             ),
-//             ListTile(
-//               contentPadding: EdgeInsets.zero,
-//               leading: Icon(Icons.circle, size: 10, color: Colors.black),
-//               title: Text('대우혁'),
-//               trailing: ElevatedButton(
-//                 onPressed: () {},
-//                 child: Text('시설'),
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.grey[300],
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(20),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//             SizedBox(height: 20),
-//             Text(
-//               '도서관 에어컨 너무 약해요',
-//               style: TextStyle(fontSize: 16),
-//             ),
-//             Spacer(),
-//             Text(
-//               '투표 기간: 2024.7.01 ~ 2024.7.15 D-14',
-//               style: TextStyle(color: Colors.grey),
-//             ),
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 Icon(Icons.thumb_down, color: Colors.black),
-//                 Expanded(
-//                   child: Padding(
-//                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                     child: LinearProgressIndicator(
-//                       value: 0.77, // 23/30 votes
-//                       backgroundColor: Colors.grey[300],
-//                       valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
-//                     ),
-//                   ),
-//                 ),
-//                 Icon(Icons.thumb_up, color: Colors.black),
-//                 Text(
-//                   '23/30',
-//                   style: TextStyle(color: Colors.black),
-//                 ),
-//               ],
-//             ),
-//             SizedBox(height: 20),
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceAround,
-//               children: [
-//                 ElevatedButton(
-//                   onPressed: () {
-//                     // Handle disagree button press
-//                   },
-//                   child: Text('비동의'),
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: Colors.red,
-//                     minimumSize: Size(150, 50),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                   ),
-//                 ),
-//                 ElevatedButton(
-//                   onPressed: () {
-//                     // Handle agree button press
-//                   },
-//                   child: Text('동의'),
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: Colors.lightBlue,
-//                     minimumSize: Size(150, 50),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:sw/src/custom_drawer.dart';
 
-class PostDetailScreen extends StatelessWidget {
-  Future<PostDetail> fetchPostDetail() async {
-    final response = await http.get(Uri.parse('http://52.79.169.32:8080'));
-    
+class PostDetailScreen extends ConsumerWidget {
+  final GlobalKey<ScaffoldState> _scaffoldKey30 = GlobalKey<ScaffoldState>();
+  final int postId;
+
+  PostDetailScreen({required this.postId});
+
+  Future<PostDetail?> fetchPostDetail(int postId) async {
+    final response = await http.get(Uri.parse('http://52.79.169.32:8080/api/posts'));
+
     if (response.statusCode == 200) {
-      return PostDetail.fromJson(json.decode(response.body));
+      // List<dynamic> posts = json.decode(response.body);
+      List<dynamic> posts = jsonDecode(utf8.decode(response.bodyBytes));
+      for (var post in posts) {
+        if (post['postId'] == postId) {
+          return PostDetail.fromJson(post);
+        }
+      }
+      return null;
     } else {
       throw Exception('Failed to load post detail');
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      key: _scaffoldKey30, // Scaffold의 키로 설정
       appBar: AppBar(
-        backgroundColor: Colors.lightBlue,
+        title: Text(
+          '청원글 상세페이지',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            // Handle back button press
+            ref.read(filterProvider.notifier).state = 0;
+            context.pop();
           },
         ),
-        title: Text('청원글'),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Handle notification button press
+              _scaffoldKey30.currentState?.openEndDrawer();
             },
           ),
         ],
       ),
-      body: FutureBuilder<PostDetail>(
-        future: fetchPostDetail(),
+      endDrawer: CustomDrawer(),
+      body: FutureBuilder<PostDetail?>(
+        future: fetchPostDetail(postId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -168,142 +69,667 @@ class PostDetailScreen extends StatelessWidget {
 
           final post = snapshot.data!;
           
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.circle, size: 10, color: Colors.black),
-                  title: Text(post.username),
-                  trailing: ElevatedButton(
-                    onPressed: () {},
-                    child: Text(post.category),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  post.content,
-                  style: TextStyle(fontSize: 16),
-                ),
-                Spacer(),
-                Text(
-                  '투표 기간: ${post.voteStartDate} ~ ${post.voteEndDate} D-${post.daysRemaining}',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(Icons.thumb_down, color: Colors.black),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: LinearProgressIndicator(
-                          value: post.voteProgress,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.thumb_up, color: Colors.black),
-                    Text(
-                      '${post.votes}/${post.totalVotes}',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle disagree button press
-                      },
-                      child: Text('비동의'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        minimumSize: Size(150, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle agree button press
-                      },
-                      child: Text('동의'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlue,
-                        minimumSize: Size(150, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
+          if (post.postType == 'state1') {
+            return State1Detail(post: post);
+          } else if (post.postType == 'state2') {
+            return State2Detail(post: post);
+          } else if (post.postType == 'state3') {
+            return State3Detail(post: post);
+          } else {
+            return Center(child: Text('Unsupported post type'));
+          }
         },
       ),
     );
   }
 }
 
+class State1Detail extends StatelessWidget {
+  final PostDetail post;
+
+  State1Detail({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final endDate = post.createdAt.add(Duration(days: 14));
+    final remainingDays = endDate.difference(DateTime.now()).inDays;
+    final formattedStartDate = DateFormat('yyyy.MM.dd').format(post.createdAt);
+    final formattedEndDate = DateFormat('yyyy.MM.dd').format(endDate);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.circle, size: 10, color: Colors.black),
+            title: Text('익명의 글쓴이'),
+            trailing: ElevatedButton(
+              onPressed: () {},
+              child: Text(post.postCategory),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            post.content,
+            style: TextStyle(fontSize: 16),
+          ),
+          Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,  // 양 끝으로 정렬
+            children: [
+              Text(
+                '투표 기간: $formattedStartDate ~ $formattedEndDate D-$remainingDays',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${post.agree + post.disagree} votes',
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(Icons.thumb_down, color: Colors.black),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: LinearProgressIndicator(
+                    value: post.agree / (post.agree + post.disagree),
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
+                  ),
+                ),
+              ),
+              Icon(Icons.thumb_up, color: Colors.black),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await addPostDisagree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('비동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+                child: Text('비동의'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  minimumSize: Size(150, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await addPostAgree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+                child: Text('동의'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue,
+                  minimumSize: Size(150, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class State2Detail extends StatelessWidget {
+  final PostDetail post;
+
+  State2Detail({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final endDate = post.createdAt.add(Duration(days: 14));
+    final remainingDays = endDate.difference(DateTime.now()).inDays;
+    final formattedStartDate = DateFormat('yyyy.MM.dd').format(post.createdAt);
+    final formattedEndDate = DateFormat('yyyy.MM.dd').format(endDate);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.circle, size: 10, color: Colors.black),
+            title: Text('익명의 글쓴이'),
+            trailing: ElevatedButton(
+              onPressed: () {},
+              child: Text(post.postCategory),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            post.content,
+            style: TextStyle(fontSize: 16),
+          ),
+          Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '투표 기간: $formattedStartDate ~ $formattedEndDate D-$remainingDays',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${post.agree + post.disagree} votes',
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.thumb_down, color: Colors.red),
+                onPressed: () async {
+                  try {
+                    await addPostDisagree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('비동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+              ),
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 25,
+                        child: LinearProgressIndicator(
+                          value: post.disagree / (post.agree + post.disagree),
+                          backgroundColor: Colors.lightBlue[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              '${((post.disagree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              '${((post.agree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.thumb_up, color: Colors.lightBlue),
+                onPressed: () async {
+                  try {
+                    await addPostAgree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          FutureBuilder<List<Comment>>(
+            future: fetchComments(post.postId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData) {
+                return Center(child: Text('No comments'));
+              }
+
+              final comments = snapshot.data!;
+
+              return Expanded(
+                child: ListView.builder(
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    return ListTile(
+                      title: Text(comment.commentContent),
+                      subtitle: Text(DateFormat('yyyy.MM.dd').format(comment.createdDate)),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () async {
+                          await deleteComment(comment.commentId);
+                          // Refresh the comments list
+                          (context as Element).reassemble();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          TextField(
+            controller: commentController,
+            decoration: InputDecoration(
+              // labelText: 'Add a comment',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.send),
+                onPressed: () async {
+                  await addComment(post.postId, 1, commentController.text);
+                  commentController.clear();
+                  // Refresh the comments list
+                  (context as Element).reassemble();
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class State3Detail extends StatelessWidget {
+  final PostDetail post;
+
+  State3Detail({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final endDate = post.createdAt.add(Duration(days: 14));
+    final remainingDays = endDate.difference(DateTime.now()).inDays;
+    final formattedStartDate = DateFormat('yyyy.MM.dd').format(post.createdAt);
+    final formattedEndDate = DateFormat('yyyy.MM.dd').format(endDate);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.circle, size: 10, color: Colors.black),
+            title: Text('익명의 글쓴이'),
+            trailing: ElevatedButton(
+              onPressed: () {},
+              child: Text(post.postCategory),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            post.content,
+            style: TextStyle(fontSize: 16),
+          ),
+          Spacer(),
+          Text(
+            '답변:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          SizedBox(height: 10),
+          Text(
+            '답변 대기중입니다',
+            style: TextStyle(color: Colors.grey),
+          ),
+          Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '투표 기간: $formattedStartDate ~ $formattedEndDate D-$remainingDays',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${post.agree + post.disagree} votes',
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.thumb_down, color: Colors.red),
+                onPressed: () async {
+                  try {
+                    await addPostDisagree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('비동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+              ),
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 25,
+                        child: LinearProgressIndicator(
+                          value: post.disagree / (post.agree + post.disagree),
+                          backgroundColor: Colors.lightBlue[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              '${((post.disagree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              '${((post.agree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.thumb_up, color: Colors.lightBlue),
+                onPressed: () async {
+                  try {
+                    await addPostAgree(post.postId, post.userId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('동의에 성공했습니다')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('이미 투표하셨습니다')),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          FutureBuilder<List<Comment>>(
+            future: fetchComments(post.postId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData) {
+                return Center(child: Text('No comments'));
+              }
+
+              final comments = snapshot.data!;
+
+              return Expanded(
+                child: ListView.builder(
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    return ListTile(
+                      title: Text(comment.commentContent),
+                      subtitle: Text(DateFormat('yyyy.MM.dd').format(comment.createdDate)),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () async {
+                          await deleteComment(comment.commentId);
+                          // Refresh the comments list
+                          (context as Element).reassemble();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          TextField(
+            controller: commentController,
+            decoration: InputDecoration(
+              // labelText: 'Add a comment',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.send),
+                onPressed: () async {
+                  await addComment(post.postId, 1, commentController.text);
+                  commentController.clear();
+                  // Refresh the comments list
+                  (context as Element).reassemble();
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+final filterProvider = StateProvider<int>((ref) => 0);
+
 class PostDetail {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
   final String title;
-  final String username;
-  final String category;
   final String content;
-  final String voteStartDate;
-  final String voteEndDate;
-  final int daysRemaining;
-  final int votes;
-  final int totalVotes;
-  final double voteProgress;
+  final int participants;
+  final int agree;
+  final int disagree;
+  final DateTime createdAt;
 
   PostDetail({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
     required this.title,
-    required this.username,
-    required this.category,
     required this.content,
-    required this.voteStartDate,
-    required this.voteEndDate,
-    required this.daysRemaining,
-    required this.votes,
-    required this.totalVotes,
-    required this.voteProgress,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
+    required this.createdAt,
   });
 
   factory PostDetail.fromJson(Map<String, dynamic> json) {
     return PostDetail(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
       title: json['title'],
-      username: json['username'],
-      category: json['category'],
       content: json['content'],
-      voteStartDate: json['vote_start_date'],
-      voteEndDate: json['vote_end_date'],
-      daysRemaining: json['days_remaining'],
-      votes: json['votes'],
-      totalVotes: json['total_votes'],
-      voteProgress: json['votes'] / json['total_votes'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
+      createdAt: DateTime.parse(json['createdAt']),
     );
   }
 }
+
+Future<List<Comment>> fetchComments(int postId) async {
+  final response = await http.get(Uri.parse('http://52.79.169.32:8080/api/comments/post/$postId'));
+
+  if (response.statusCode == 200) {
+    List<dynamic> comments = json.decode(response.body);
+    return comments.map((comment) => Comment.fromJson(comment)).toList();
+  } else {
+    throw Exception('Failed to load comments');
+  }
+}
+
+Future<void> addComment(int postId, int userId, String content) async {
+  final response = await http.post(
+    Uri.parse('http://52.79.169.32:8080/api/comments/add/$postId/$userId'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({'commentContent': content}),
+  );
+
+  if (response.statusCode != 201) {
+    throw Exception('Failed to add comment');
+  }
+}
+
+Future<void> deleteComment(int commentId) async {
+  final response = await http.delete(
+    Uri.parse('http://52.79.169.32:8080/api/comments/delete/$commentId'),
+  );
+
+  if (response.statusCode != 204) {
+    throw Exception('Failed to delete comment');
+  }
+}
+
+class Comment {
+  final int commentId;
+  final int postId;
+  final int userId;
+  final String commentContent;
+  final DateTime createdDate;
+
+  Comment({
+    required this.commentId,
+    required this.postId,
+    required this.userId,
+    required this.commentContent,
+    required this.createdDate,
+  });
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
+      commentId: json['commentId'],
+      postId: json['postId'],
+      userId: json['userId'],
+      commentContent: json['commentContent'],
+      createdDate: DateTime.parse(json['createdDate']),
+    );
+  }
+}
+
+
+Future<void> addPostAgree(int postId, int userId) async {
+  final response = await http.post(
+    Uri.parse('http://52.79.169.32:8080/api/posts/$postId/agree/$userId'),
+  );
+
+  if (response.statusCode == 204) {
+    throw Exception();
+  }
+  else if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Failed to agree to post');
+  }
+}
+
+Future<void> addPostDisagree(int postId, int userId) async {
+  final response = await http.post(
+    Uri.parse('http://52.79.169.32:8080/api/posts/$postId/disagree/$userId'),
+  );
+
+  if (response.statusCode == 204) {
+    throw Exception();
+  }
+  else if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Failed to agree to post');
+  }
+}
+
+final commentController = TextEditingController();
