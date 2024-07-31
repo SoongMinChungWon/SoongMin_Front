@@ -267,15 +267,24 @@ class PetitionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.6,
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                Spacer(),
                 Chip(
-                  label: Text(categoryMapping[category] ?? category),
-                ),
+                    label: SizedBox(
+                        width: 70,
+                        child: Text(
+                          categoryMapping[category] ?? category,
+                          textAlign: TextAlign.center,
+                        ))),
               ],
             ),
             SizedBox(height: 8),

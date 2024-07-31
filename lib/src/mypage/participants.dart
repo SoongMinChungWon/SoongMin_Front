@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:sw/core/provider/login_provider.dart';
-import 'package:sw/src/custom_drawer.dart'; // Provider가 정의된 경로를 명확히 해주세요.
+import 'dart:convert';
+
+import 'package:sw/src/custom_drawer.dart';
 
 class Petition {
   final int postId;
@@ -71,8 +72,9 @@ class _ParticipantsState extends ConsumerState<Participants> {
 
     try {
       final response = await http.get(Uri.parse(
-          'http://52.79.169.32:8080/api/mypage/comment-posts//${loginInfo!.userId}'));
+          'http://52.79.169.32:8080/api/mypage/comment-posts/${loginInfo!.userId}'));
       print(response.body);
+
       if (response.statusCode == 200) {
         List<dynamic> data =
             jsonDecode(utf8.decode(response.bodyBytes)); // UTF-8로 디코딩
@@ -201,6 +203,14 @@ class PetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고 합니다'
+    };
+
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Padding(
@@ -209,13 +219,24 @@ class PetitionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.6,
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                Spacer(),
-                Chip(label: Text(category)),
+                Chip(
+                    label: SizedBox(
+                        width: 70,
+                        child: Text(
+                          categoryMapping[category] ?? category,
+                          textAlign: TextAlign.center,
+                        ))),
               ],
             ),
             SizedBox(height: 8),
