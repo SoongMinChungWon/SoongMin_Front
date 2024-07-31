@@ -2,40 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'package:sw/core/provider/category_state.dart';
 import 'dart:convert';
 
-import 'package:sw/core/provider/search_provider.dart';
-
 class Petition {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
   final String title;
-  final String description;
-  final String category;
-  final int agreement;
-  final int disagreement;
+  final String content;
+  final int participants;
+  final int agree;
+  final int disagree;
 
   Petition({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
     required this.title,
-    required this.description,
-    required this.category,
-    required this.agreement,
-    required this.disagreement,
+    required this.content,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
   });
 
   factory Petition.fromJson(Map<String, dynamic> json) {
     return Petition(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
       title: json['title'],
-      description: json['description'],
-      category: json['category'],
-      agreement: json['agreement'],
-      disagreement: json['disagreement'],
+      content: json['content'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
     );
   }
 }
 
+final filterProvider = StateProvider<int>((ref) => 0);
+
 final postsInProgressProvider = FutureProvider<List<Petition>>((ref) async {
-  final response =
-      await http.get(Uri.parse('http://52.79.169.32:8080/api/posts/state1'));
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 0:
+      filterState = 'agree';
+      break;
+    case 1:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state1'));
   if (response.statusCode == 200) {
     List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
     return data.map((json) => Petition.fromJson(json)).toList();
@@ -45,8 +70,22 @@ final postsInProgressProvider = FutureProvider<List<Petition>>((ref) async {
 });
 
 final postsWaitingProvider = FutureProvider<List<Petition>>((ref) async {
-  final response =
-      await http.get(Uri.parse('http://52.79.169.32:8080/api/posts/state2'));
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 1:
+      filterState = 'agree';
+      break;
+    case 2:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state2'));
   if (response.statusCode == 200) {
     List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
     return data.map((json) => Petition.fromJson(json)).toList();
@@ -56,8 +95,22 @@ final postsWaitingProvider = FutureProvider<List<Petition>>((ref) async {
 });
 
 final postsCompletedProvider = FutureProvider<List<Petition>>((ref) async {
-  final response =
-      await http.get(Uri.parse('http://52.79.169.32:8080/api/posts'));
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 1:
+      filterState = 'agree';
+      break;
+    case 2:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state4'));
   if (response.statusCode == 200) {
     List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
     return data.map((json) => Petition.fromJson(json)).toList();
@@ -71,12 +124,7 @@ class Home extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final searchNotifier = ref.watch(searchProvider.notifier);
-    final categoryState = ref.watch(categoryProvider);
-    final categoryNotifier = ref.watch(categoryProvider.notifier);
     final selectedFilter = ref.watch(filterProvider);
-    String searchValue = '';
-    String categoryValue = '';
 
     void goSearch() {
       _searchController.clear();
@@ -102,8 +150,7 @@ class Home extends ConsumerWidget {
                 suffixIcon: IconButton(
                   icon: Icon(Icons.search),
                   onPressed: () {
-                    searchValue = _searchController.text;
-                    searchNotifier.updateSearch(searchValue);
+                    // 검색 로직을 처리하세요.
                     goSearch();
                   },
                 ),
@@ -111,32 +158,6 @@ class Home extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<String>(
-              icon: Icon(Icons.filter_list),
-              value: categoryValue.isNotEmpty ? categoryValue : null,
-              items: <String>[
-                '시설',
-                '제휴',
-                '교과',
-                '행사',
-                '신고합니다',
-              ].map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                newValue!;
-                categoryNotifier.updateCategory(newValue);
-              },
-              hint: categoryState.selectedCategory != ''
-                  ? Text(categoryState.selectedCategory!)
-                  : Text('필터 하고 싶은 카테고리를 선택하세요'),
             ),
           ),
           Padding(
@@ -255,10 +276,10 @@ class PetitionSection extends ConsumerWidget {
                   final petition = petitions[index];
                   return PetitionCard(
                     title: petition.title,
-                    description: petition.description,
-                    category: petition.category,
-                    agreement: petition.agreement,
-                    disagreement: petition.disagreement,
+                    description: petition.content,
+                    category: petition.postCategory,
+                    agreement: petition.agree,
+                    disagreement: petition.disagree,
                   );
                 },
               ),
@@ -289,6 +310,14 @@ class PetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고합니다'
+    };
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.8,
       child: Card(
@@ -299,13 +328,25 @@ class PetitionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width * 0.4,
+                    child: Text(
+                      title,
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                  Spacer(),
-                  Chip(label: Text(category)),
+                  Chip(
+                      label: SizedBox(
+                          width: 70,
+                          child: Text(
+                            categoryMapping[category] ?? category,
+                            textAlign: TextAlign.center,
+                          ))),
                 ],
               ),
               SizedBox(height: 8),
@@ -343,5 +384,3 @@ class PetitionCard extends StatelessWidget {
     );
   }
 }
-
-final filterProvider = StateProvider((ref) => 0);

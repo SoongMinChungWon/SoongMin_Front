@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:sw/src/custom_drawer.dart';
+
 class Petition {
   final int postId;
   final int userId;
@@ -67,10 +69,10 @@ class _ProceedingState extends State<Proceeding> {
 
     String filterState;
     switch (filter) {
-      case 1:
+      case 0:
         filterState = 'agree';
         break;
-      case 2:
+      case 1:
         filterState = 'expiry';
         break;
       default:
@@ -126,7 +128,7 @@ class _ProceedingState extends State<Proceeding> {
           ),
         ],
       ),
-      endDrawer: Drawer(), // CustomDrawer 사용을 고려하세요.
+      endDrawer: CustomDrawer(), // CustomDrawer 사용을 고려하세요.
       body: Column(
         children: [
           Padding(
@@ -249,6 +251,14 @@ class PetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고 합니다'
+    };
+
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Padding(
@@ -257,13 +267,24 @@ class PetitionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.6,
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                Spacer(),
-                Chip(label: Text(category)),
+                Chip(
+                    label: SizedBox(
+                        width: 70,
+                        child: Text(
+                          categoryMapping[category] ?? category,
+                          textAlign: TextAlign.center,
+                        ))),
               ],
             ),
             SizedBox(height: 8),

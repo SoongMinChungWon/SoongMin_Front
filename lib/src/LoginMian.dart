@@ -29,7 +29,7 @@ class LoginMain extends ConsumerWidget {
       final responseData = jsonDecode(response.body);
       final user = User.fromJson(responseData);
       // // 로그인 성공 시 상태 업데이트
-
+      print(responseData);
       ref.read(loginProvider.notifier).setUser(user);
 
       if (response.statusCode == 200) {
