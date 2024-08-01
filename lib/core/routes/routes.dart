@@ -15,19 +15,33 @@ import 'package:sw/src/mypage/participants.dart';
 import 'package:sw/src/proceeding.dart';
 import 'package:sw/src/search.dart';
 import 'package:sw/src/wait.dart';
+import 'package:sw/src/splash_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final ValueNotifier<bool> refreshNotifier = ValueNotifier<bool>(false);
+
 final GoRouter router = GoRouter(
-  //이 부분 없으니까 처음 화면 그냥 보라색으로 뜨는 경우도 있음. 초기화면 지정해 놓은 부분이야
   navigatorKey: rootNavigatorKey,
   refreshListenable: refreshNotifier,
   initialLocation: '/',
+  errorPageBuilder: (context, state) {
+    return MaterialPage(
+      child: Scaffold(
+        body: Center(
+          child: Text('페이지를 찾을 수 없습니다.'),
+        ),
+      ),
+    );
+  },
   routes: [
-    //초기화면 지정하는 부분
     GoRoute(
       path: '/',
-      builder: (context, state) => LoginMain(),
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: "/login",
+      pageBuilder: (BuildContext context, GoRouterState state) =>
+          NoTransitionPage(child: LoginMain()),
     ),
     GoRoute(
       path: '/main',
