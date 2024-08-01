@@ -8,6 +8,27 @@ import 'package:sw/core/provider/category_state.dart';
 import 'package:sw/core/provider/login_provider.dart';
 import 'package:sw/src/custom_drawer.dart';
 
+// 청원 데이터 상태를 관리하는 StateNotifier
+class PetitionState extends StateNotifier<Map<String, String>> {
+  PetitionState() : super({'title': '', 'content': ''});
+
+  void updateTitle(String title) {
+    state = {...state, 'title': title};
+  }
+
+  void updateContent(String content) {
+    state = {...state, 'content': content};
+  }
+
+  void reset() {
+    state = {'title': '', 'content': ''};
+  }
+}
+
+final petitionProvider =
+    StateNotifierProvider<PetitionState, Map<String, String>>(
+        (ref) => PetitionState());
+
 class Create extends ConsumerStatefulWidget {
   @override
   _CreateState createState() => _CreateState();
@@ -31,13 +52,17 @@ class _CreateState extends ConsumerState<Create> {
   Widget build(BuildContext context) {
     final categoryState = ref.watch(categoryProvider);
     final categoryNotifier = ref.read(categoryProvider.notifier);
+    final petitionState = ref.watch(petitionProvider);
+    final petitionNotifier = ref.read(petitionProvider.notifier);
 
     return Scaffold(
       key: _scaffoldKey5,
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           '청원 하기',
           style: TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
@@ -47,6 +72,12 @@ class _CreateState extends ConsumerState<Create> {
           },
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              context.push('/search');
+            },
+          ),
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
@@ -68,6 +99,9 @@ class _CreateState extends ConsumerState<Create> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
+              onChanged: (value) {
+                petitionNotifier.updateTitle(value);
+              },
             ),
             SizedBox(height: 10),
             Row(
@@ -136,6 +170,9 @@ class _CreateState extends ConsumerState<Create> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
+              onChanged: (value) {
+                petitionNotifier.updateContent(value);
+              },
             ),
             Spacer(),
             ElevatedButton.icon(
@@ -163,8 +200,9 @@ class _CreateState extends ConsumerState<Create> {
 
   Future<void> _submitPetition() async {
     final loginInfo = ref.read(loginProvider);
-    final String title = _titleController.text;
-    final String content = _contentController.text;
+    final petitionState = ref.read(petitionProvider);
+    final String title = petitionState['title']!;
+    final String content = petitionState['content']!;
     final String? category = _categoryMapping[_categoryValue];
 
     if (title.isEmpty || content.isEmpty || category == null) {
