@@ -2,34 +2,140 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:sw/src/custom_drawer.dart';
-import 'package:sw/src/home.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class Ai extends ConsumerWidget {
-  final GlobalKey<ScaffoldState> _scaffoldKey11 = GlobalKey<ScaffoldState>();
+import 'package:sw/src/create.dart';
+import 'package:sw/src/custom_drawer.dart';
+
+// 청원 데이터 모델 정의
+class Petition {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
+  final String title;
+  final String content;
+  final int participants;
+  final int agree;
+  final int disagree;
+
+  Petition({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
+    required this.title,
+    required this.content,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
+  });
+
+  factory Petition.fromJson(Map<String, dynamic> json) {
+    return Petition(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
+      title: json['title'],
+      content: json['content'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
+    );
+  }
+}
+
+class Ai extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _AiState createState() => _AiState();
+}
+
+class _AiState extends ConsumerState<Ai> {
+  final GlobalKey<ScaffoldState> _scaffoldKey20 = GlobalKey<ScaffoldState>();
+  List<Petition> posts = [];
+  bool isLoading = true; // 데이터 로딩 상태
+  bool hasError = false; // 에러 상태
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts();
+  }
+
+  // 필터링된 게시물을 가져오는 함수
+  Future<void> fetchPosts() async {
+    setState(() {
+      isLoading = true;
+      hasError = false;
+    });
+
+    final petitionState = ref.read(petitionProvider);
+    final String title = petitionState['title'] ?? '';
+    final String content = petitionState['content'] ?? '';
+
+    final Map<String, dynamic> petitionData = {
+      'title': title,
+      'content': content,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://52.79.169.32:8080/api/posts/ai'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(petitionData),
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        List<dynamic> data =
+            jsonDecode(utf8.decode(response.bodyBytes)); // UTF-8로 디코딩
+        setState(() {
+          posts = data.map((json) => Petition.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey11,
+      key: _scaffoldKey20,
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
-          'AI 유사 글',
+          'AI 유사도 찾기',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            ref.read(filterProvider.notifier).state = 0;
             context.pop();
           },
         ),
         actions: [
           IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              context.push('/search');
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Notification 버튼을 눌렀을 때 오른쪽에서 Drawer 열기
-              _scaffoldKey11.currentState?.openEndDrawer();
+              _scaffoldKey20.currentState?.openEndDrawer();
             },
           ),
         ],
@@ -37,80 +143,28 @@ class Ai extends ConsumerWidget {
       endDrawer: CustomDrawer(),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Consumer(
-              builder: (context, ref, child) {
-                final selectedFilter = ref.watch(filterProvider);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 0,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('최다동의순'),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 1,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('만료임박순'),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 2,
-                          groupValue: selectedFilter,
-                          onChanged: (int? value) {
-                            ref.read(filterProvider.notifier).state = value!;
-                          },
-                        ),
-                        Text('최신순'),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
           Expanded(
-            child: ListView(
-              children: [
-                PetitionCard(
-                  title: '도서관 에어컨',
-                  description: '도서관 에어컨 너무 약해요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
-                ),
-                PetitionCard(
-                  title: '도서관 화장실',
-                  description: '화장실이 너무 더러워요',
-                  category: '시설',
-                  agreement: 70,
-                  disagreement: 30,
-                ),
-                PetitionCard(
-                  title: '도서관 자리',
-                  description: '시험기간에 반납이 안됩니다ㅠ',
-                  category: '시설',
-                  agreement: 80,
-                  disagreement: 20,
-                ),
-              ],
+            child: RefreshIndicator(
+              onRefresh: () async {
+                fetchPosts();
+              },
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : hasError
+                      ? Center(child: Text('Error loading posts'))
+                      : ListView.builder(
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) {
+                            final petition = posts[index];
+                            return PetitionCard(
+                              title: petition.title,
+                              description: petition.content,
+                              category: petition.postCategory,
+                              agreement: petition.agree,
+                              disagreement: petition.disagree,
+                            );
+                          },
+                        ),
             ),
           ),
         ],
@@ -136,6 +190,20 @@ class PetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고 합니다'
+    };
+
+    final int totalVotes = agreement + disagreement;
+    final double agreementPercentage =
+        totalVotes > 0 ? (agreement / totalVotes) * 100 : 0;
+    final double disagreementPercentage =
+        totalVotes > 0 ? (disagreement / totalVotes) * 100 : 0;
+
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Padding(
@@ -144,17 +212,32 @@ class PetitionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.6,
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                Spacer(),
-                Chip(label: Text(category)),
+                Chip(
+                    label: SizedBox(
+                        width: 70,
+                        child: Text(
+                          categoryMapping[category] ?? category,
+                          textAlign: TextAlign.center,
+                        ))),
               ],
             ),
             SizedBox(height: 8),
-            Text(description),
+            Text(
+              description,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
             SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,21 +246,21 @@ class PetitionCard extends StatelessWidget {
                   children: [
                     Icon(Icons.thumb_down, color: Colors.red),
                     SizedBox(width: 5),
-                    Text('$disagreement%'),
+                    Text('${disagreementPercentage.toStringAsFixed(1)}%'),
                   ],
                 ),
                 Row(
                   children: [
                     Icon(Icons.thumb_up, color: Colors.blue),
                     SizedBox(width: 5),
-                    Text('$agreement%'),
+                    Text('${agreementPercentage.toStringAsFixed(1)}%'),
                   ],
                 ),
               ],
             ),
             SizedBox(height: 8),
             LinearProgressIndicator(
-              value: disagreement / 100,
+              value: totalVotes > 0 ? disagreement / totalVotes : 0,
               backgroundColor: Colors.blue,
               color: Colors.red,
             ),
