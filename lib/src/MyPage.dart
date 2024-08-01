@@ -65,11 +65,11 @@ class MyPage extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '컴퓨터학부',
+                      loginInfo!.major,
                       style: TextStyle(color: Colors.black, fontSize: 16),
                     ),
                     Text(
-                      '김준하',
+                      loginInfo.name,
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 20,
@@ -82,7 +82,7 @@ class MyPage extends ConsumerWidget {
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                         Text(
-                          loginInfo?.loginId ?? '20201830',
+                          loginInfo.loginId ,
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                       ],

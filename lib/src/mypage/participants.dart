@@ -72,7 +72,7 @@ class _ParticipantsState extends ConsumerState<Participants> {
 
     try {
       final response = await http.get(
-          Uri.parse('http://52.79.169.32:8080/api/mypage/comment-posts/1'));
+          Uri.parse('http://52.79.169.32:8080/api/mypage/comment-posts/${loginInfo!.userId}'));
       print(response.body);
 
       if (response.statusCode == 200) {

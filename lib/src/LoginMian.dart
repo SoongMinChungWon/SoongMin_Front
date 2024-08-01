@@ -28,8 +28,8 @@ class LoginMain extends ConsumerWidget {
 
       // 5초 대기
       // await Future.delayed(Duration(seconds: 4));
-
-      final responseData = jsonDecode(response.body);
+      final utf8z = utf8.decode(response.bodyBytes);
+      final responseData = jsonDecode(utf8z);
       final user = User.fromJson(responseData);
       // 로그인 성공 시 상태 업데이트
       print(responseData);

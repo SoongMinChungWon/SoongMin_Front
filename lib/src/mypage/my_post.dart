@@ -71,7 +71,7 @@ class _MyPostState extends ConsumerState<MyPost> {
 
     try {
       final response = await http
-          .get(Uri.parse('http://52.79.169.32:8080/api/mypage/write-posts/1'));
+          .get(Uri.parse('http://52.79.169.32:8080/api/mypage/write-posts/${loginInfo!.userId}'));
       print(response.body);
 
       if (response.statusCode == 200) {

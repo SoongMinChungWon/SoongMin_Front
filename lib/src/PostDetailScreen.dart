@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sw/core/provider/login_provider.dart';
 import 'package:sw/src/custom_drawer.dart';
 
 class PostDetailScreen extends ConsumerWidget {
@@ -47,8 +48,10 @@ class PostDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loggedInUser = ref.watch(loginProvider);
+
     return Scaffold(
-      key: _scaffoldKey30, // Scaffold의 키로 설정
+      key: _scaffoldKey30,
       appBar: AppBar(
         title: Text(
           '청원글 상세페이지',
@@ -84,13 +87,13 @@ class PostDetailScreen extends ConsumerWidget {
           }
 
           final post = snapshot.data!;
-          
+
           if (post.postType == 'state1') {
-            return State1Detail(post: post);
+            return State1Detail(post: post, userId: loggedInUser!.userId);
           } else if (post.postType == 'state2') {
-            return State2Detail(post: post);
+            return State2Detail(post: post, userId: loggedInUser!.userId);
           } else if (post.postType == 'state3') {
-            return State3Detail(post: post);
+            return State3Detail(post: post, userId: loggedInUser!.userId);
           } else if (post.postType == 'state4') {
             return FutureBuilder<PostDetail?>(
               future: fetchPostDetailWithAnswer(postId),
@@ -104,7 +107,7 @@ class PostDetailScreen extends ConsumerWidget {
                 }
 
                 final postWithAnswer = snapshot.data!;
-                return State4Detail(post: postWithAnswer);
+                return State4Detail(post: postWithAnswer, userId: loggedInUser!.userId);
               },
             );
           } else {
@@ -118,8 +121,9 @@ class PostDetailScreen extends ConsumerWidget {
 
 class State1Detail extends StatelessWidget {
   final PostDetail post;
+  final int userId;
 
-  State1Detail({required this.post});
+  State1Detail({required this.post, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -127,10 +131,6 @@ class State1Detail extends StatelessWidget {
     final remainingDays = endDate.difference(DateTime.now()).inDays;
     final formattedStartDate = DateFormat('yyyy.MM.dd').format(post.createdAt);
     final formattedEndDate = DateFormat('yyyy.MM.dd').format(endDate);
-    var totalVotes = post.agree + post.disagree;
-    if(totalVotes == 0) {
-      totalVotes = 1;
-    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -166,7 +166,7 @@ class State1Detail extends StatelessWidget {
           ),
           Spacer(),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,  // 양 끝으로 정렬
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 '투표 기간: $formattedStartDate ~ $formattedEndDate D-$remainingDays',
@@ -186,7 +186,7 @@ class State1Detail extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: LinearProgressIndicator(
-                    value: post.agree / totalVotes,
+                    value: post.agree / 30,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
                   ),
@@ -202,7 +202,7 @@ class State1Detail extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    await addPostDisagree(post.postId, post.userId);
+                    await addPostDisagree(post.postId, userId);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('비동의에 성공했습니다')),
                     );
@@ -227,7 +227,7 @@ class State1Detail extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    await addPostAgree(post.postId, post.userId);
+                    await addPostAgree(post.postId, userId);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('동의에 성공했습니다')),
                     );
@@ -259,9 +259,10 @@ class State1Detail extends StatelessWidget {
 
 class State2Detail extends StatelessWidget {
   final PostDetail post;
+  final int userId;
   final TextEditingController commentController = TextEditingController();
 
-  State2Detail({required this.post});
+  State2Detail({required this.post, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +330,7 @@ class State2Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_down, color: Colors.red),
                     onPressed: () async {
                       try {
-                        await addPostDisagree(post.postId, post.userId);
+                        await addPostDisagree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('비동의에 성공했습니다')),
                         );
@@ -383,7 +384,7 @@ class State2Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_up, color: Colors.lightBlue),
                     onPressed: () async {
                       try {
-                        await addPostAgree(post.postId, post.userId);
+                        await addPostAgree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('동의에 성공했습니다')),
                         );
@@ -452,7 +453,7 @@ class State2Detail extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.send),
               onPressed: () async {
-                await addComment(post.postId, 1, commentController.text);
+                await addComment(post.postId, userId, commentController.text);
                 commentController.clear();
                 // Refresh the comments list
                 (context as Element).reassemble();
@@ -467,9 +468,10 @@ class State2Detail extends StatelessWidget {
 
 class State3Detail extends StatelessWidget {
   final PostDetail post;
+  final int userId;
   final TextEditingController commentController = TextEditingController();
 
-  State3Detail({required this.post});
+  State3Detail({required this.post, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -547,7 +549,7 @@ class State3Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_down, color: Colors.red),
                     onPressed: () async {
                       try {
-                        await addPostDisagree(post.postId, post.userId);
+                        await addPostDisagree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('비동의에 성공했습니다')),
                         );
@@ -601,7 +603,7 @@ class State3Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_up, color: Colors.lightBlue),
                     onPressed: () async {
                       try {
-                        await addPostAgree(post.postId, post.userId);
+                        await addPostAgree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('동의에 성공했습니다')),
                         );
@@ -670,7 +672,7 @@ class State3Detail extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.send),
               onPressed: () async {
-                await addComment(post.postId, 1, commentController.text);
+                await addComment(post.postId, userId, commentController.text);
                 commentController.clear();
                 // Refresh the comments list
                 (context as Element).reassemble();
@@ -686,9 +688,10 @@ class State3Detail extends StatelessWidget {
 
 class State4Detail extends StatelessWidget {
   final PostDetail post;
+  final int userId;
   final TextEditingController commentController = TextEditingController();
 
-  State4Detail({required this.post});
+  State4Detail({required this.post, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -766,7 +769,7 @@ class State4Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_down, color: Colors.red),
                     onPressed: () async {
                       try {
-                        await addPostDisagree(post.postId, post.userId);
+                        await addPostDisagree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('비동의에 성공했습니다')),
                         );
@@ -820,7 +823,7 @@ class State4Detail extends StatelessWidget {
                     icon: Icon(Icons.thumb_up, color: Colors.lightBlue),
                     onPressed: () async {
                       try {
-                        await addPostAgree(post.postId, post.userId);
+                        await addPostAgree(post.postId, userId);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('동의에 성공했습니다')),
                         );
@@ -889,7 +892,7 @@ class State4Detail extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.send),
               onPressed: () async {
-                await addComment(post.postId, 1, commentController.text);
+                await addComment(post.postId, userId, commentController.text);
                 commentController.clear();
                 // Refresh the comments list
                 (context as Element).reassemble();

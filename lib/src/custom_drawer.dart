@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:sw/core/provider/login_provider.dart';
 import 'dart:convert';
 
 import 'package:sw/src/custom_drawer.dart';
@@ -43,12 +45,12 @@ class Petition {
   }
 }
 
-class CustomDrawer extends StatefulWidget {
+class CustomDrawer extends ConsumerStatefulWidget {
   @override
   _CustomDrawerState createState() => _CustomDrawerState();
 }
 
-class _CustomDrawerState extends State<CustomDrawer> {
+class _CustomDrawerState extends ConsumerState<CustomDrawer> {
   int selectedFilter = 0;
   List<Petition> posts = [];
   bool isLoading = true;
@@ -61,9 +63,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   Future<void> fetchPosts() async {
+          final loginInfo = ref.read(loginProvider);
     try {
       final response =
-          await http.get(Uri.parse('http://52.79.169.32:8080/api/alarm/1'));
+          await http.get(Uri.parse('http://52.79.169.32:8080/api/alarm/${loginInfo!.loginId}'));
       print(response.body);
       if (response.statusCode == 200) {
         List<dynamic> data =
@@ -90,7 +93,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
   Widget build(
     BuildContext context,
   ) {
-    return Drawer(
+    return Consumer(builder: (context,ref,child){
+      final loginInfo = ref.read(loginProvider);
+      return Drawer(
       child: Column(
         children: [
           Container(
@@ -115,11 +120,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '컴퓨터학부',
+                          loginInfo!.major,
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                         Text(
-                          '대우혁',
+                          loginInfo.name,
                           style: TextStyle(
                               color: Colors.black,
                               fontSize: 20,
@@ -133,7 +138,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                                   TextStyle(color: Colors.black, fontSize: 16),
                             ),
                             Text(
-                              '20201830',
+                              loginInfo.loginId,
                               style:
                                   TextStyle(color: Colors.black, fontSize: 16),
                             ),
@@ -169,5 +174,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
         ],
       ),
     );
+    });
+    
   }
 }

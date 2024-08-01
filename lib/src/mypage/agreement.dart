@@ -71,7 +71,7 @@ class _AgreementState extends ConsumerState<Agreement> {
 
     try {
       final response = await http
-          .get(Uri.parse('http://52.79.169.32:8080/api/mypage/agree-posts/1'));
+          .get(Uri.parse('http://52.79.169.32:8080/api/mypage/agree-posts/${loginInfo!.userId}'));
       print(response.body);
 
       if (response.statusCode == 200) {
