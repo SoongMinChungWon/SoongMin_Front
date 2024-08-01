@@ -27,6 +27,10 @@ final GoRouter router = GoRouter(
     //초기화면 지정하는 부분
     GoRoute(
       path: '/',
+      builder: (context, state) => const Splash(),
+    ),
+    GoRoute(
+      path: '/login',
       builder: (context, state) => LoginMain(),
     ),
     GoRoute(
