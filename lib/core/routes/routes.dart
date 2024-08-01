@@ -2,9 +2,9 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter/material.dart';
 import 'package:sw/src/MyPage.dart';
-
 import 'package:sw/src/LoginMian.dart';
 import 'package:sw/src/Main_Screen.dart';
+import 'package:sw/src/PostDetailScreen.dart';
 import 'package:sw/src/ai.dart';
 import 'package:sw/src/complete.dart';
 import 'package:sw/src/create.dart';
@@ -90,6 +90,13 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/search',
       builder: (context, state) => Search(),
+    ),
+    GoRoute(
+      path: '/postDetail/:postId',
+      builder: (context, state) {
+        final postId = int.parse(state.pathParameters['postId']!);
+        return PostDetailScreen(postId: postId);
+      },
     ),
   ],
 );
