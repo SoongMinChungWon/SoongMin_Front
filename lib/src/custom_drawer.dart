@@ -151,7 +151,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 final petition = posts[index];
-                String message = '${petition.title} : 청원글에 답변이 달렸어요!';
+                String state = petition.postType == 'state4'
+                    ? '청원글에 답변이 달렸어요!'
+                    : '동의 비율이 70%를 넘어 메일이 전송되었어요!';
+                String message = '${petition.title} : $state';
 
                 return ListTile(
                   leading: const Icon(Icons.notifications),
