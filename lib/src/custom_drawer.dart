@@ -1,6 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:sw/core/provider/login_provider.dart';
 import 'dart:convert';
 
 import 'package:sw/src/custom_drawer.dart';
@@ -43,12 +47,12 @@ class Petition {
   }
 }
 
-class CustomDrawer extends StatefulWidget {
+class CustomDrawer extends ConsumerStatefulWidget {
   @override
   _CustomDrawerState createState() => _CustomDrawerState();
 }
 
-class _CustomDrawerState extends State<CustomDrawer> {
+class _CustomDrawerState extends ConsumerState<CustomDrawer> {
   int selectedFilter = 0;
   List<Petition> posts = [];
   bool isLoading = true;
@@ -61,9 +65,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   Future<void> fetchPosts() async {
+    final loginInfo = ref.read(loginProvider);
     try {
-      final response =
-          await http.get(Uri.parse('http://52.79.169.32:8080/api/alarm/1'));
+      final response = await http.get(
+          Uri.parse('http://52.79.169.32:8080/api/alarm/${loginInfo!.userId}'));
       print(response.body);
       if (response.statusCode == 200) {
         List<dynamic> data =
@@ -90,84 +95,91 @@ class _CustomDrawerState extends State<CustomDrawer> {
   Widget build(
     BuildContext context,
   ) {
-    return Drawer(
-      child: Column(
-        children: [
-          Container(
-            height: 150,
-            child: DrawerHeader(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Color(0xffc2c2c2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      child: const Icon(Icons.person),
-                      backgroundColor: Colors.white,
+    return Consumer(
+      builder: (context, ref, child) {
+        final loginInfo = ref.watch(loginProvider);
+
+        return Drawer(
+          child: Column(
+            children: [
+              Container(
+                height: 150,
+                child: DrawerHeader(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Color(0xffc2c2c2),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
                       children: [
-                        Text(
-                          '컴퓨터학부',
-                          style: TextStyle(color: Colors.black, fontSize: 16),
+                        CircleAvatar(
+                          radius: 30,
+                          child: const Icon(Icons.person),
+                          backgroundColor: Colors.white,
                         ),
-                        Text(
-                          '대우혁',
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Row(
+                        SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '학번 / ',
+                              loginInfo!.major,
                               style:
                                   TextStyle(color: Colors.black, fontSize: 16),
                             ),
                             Text(
-                              '20201830',
-                              style:
-                                  TextStyle(color: Colors.black, fontSize: 16),
+                              loginInfo.name,
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  '학번 / ',
+                                  style: TextStyle(
+                                      color: Colors.black, fontSize: 16),
+                                ),
+                                Text(
+                                  loginInfo.loginId,
+                                  style: TextStyle(
+                                      color: Colors.black, fontSize: 16),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final petition = posts[index];
-                String state = petition.postType == 'state4'
-                    ? '청원글에 답변이 달렸어요!'
-                    : '동의 비율이 70%를 넘어 메일이 전송되었어요!';
-                String message = '${petition.title} : $state';
+              Expanded(
+                child: ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    final petition = posts[index];
+                    String state = petition.postType == 'state4'
+                        ? '청원글에 답변이 달렸어요!'
+                        : '동의 비율이 70%를 넘어 메일이 전송되었어요!';
+                    String message = '${petition.title} : $state';
 
-                return ListTile(
-                  leading: const Icon(Icons.notifications),
-                  title: Text(message),
-                  onTap: () {
-                    // 알림 클릭 시 동작
+                    return ListTile(
+                      leading: const Icon(Icons.notifications),
+                      title: Text(message),
+                      onTap: () {
+                        // 알림 클릭 시 동작
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
