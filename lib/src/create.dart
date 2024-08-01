@@ -217,7 +217,7 @@ class _CreateState extends ConsumerState<Create> {
       'title': title,
       'content': content,
       'categoryId': category,
-      'typeId': 'state3' // 필요에 따라 typeId를 지정하세요.
+      'typeId': 'state1' // 필요에 따라 typeId를 지정하세요.
     };
 
     final response = await http.post(

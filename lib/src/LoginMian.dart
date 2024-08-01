@@ -13,7 +13,7 @@ class LoginMain extends ConsumerWidget {
   Future<void> _login(BuildContext context, WidgetRef ref) async {
     final String id = _idController.text;
     final String password = _passwordController.text;
- 
+
     try {
       final response = await http.post(
         Uri.parse('http://localhost:8080/api/login'), // 서버 URL로 변경
@@ -27,9 +27,9 @@ class LoginMain extends ConsumerWidget {
       );
 
       // 5초 대기
-      // await Future.delayed(Duration(seconds: 4));
-
-      final responseData = jsonDecode(response.body);
+      // UTF-8로 디코딩하여 응답 데이터 처리
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
+      final responseData = jsonDecode(utf8DecodedBody);
       final user = User.fromJson(responseData);
       // 로그인 성공 시 상태 업데이트
       print(responseData);

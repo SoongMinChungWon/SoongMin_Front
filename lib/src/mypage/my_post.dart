@@ -70,8 +70,8 @@ class _MyPostState extends ConsumerState<MyPost> {
     });
 
     try {
-      final response = await http
-          .get(Uri.parse('http://52.79.169.32:8080/api/mypage/write-posts/1'));
+      final response = await http.get(Uri.parse(
+          'http://52.79.169.32:8080/api/mypage/write-posts/${loginInfo!.userId}'));
       print(response.body);
 
       if (response.statusCode == 200) {
@@ -242,10 +242,11 @@ class PetitionCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(
-                    width: MediaQuery.sizeOf(context).width * 0.6,
+                    width: MediaQuery.sizeOf(context).width * 0.5,
                     child: Text(
                       title,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),

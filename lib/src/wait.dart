@@ -295,10 +295,11 @@ class PetitionCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(
-                    width: MediaQuery.sizeOf(context).width * 0.6,
+                    width: MediaQuery.sizeOf(context).width * 0.5,
                     child: Text(
                       title,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -314,10 +315,10 @@ class PetitionCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-              description,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
+                description,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
               SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
