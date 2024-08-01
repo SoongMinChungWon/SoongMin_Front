@@ -27,7 +27,7 @@ class LoginMain extends ConsumerWidget {
       );
 
       // 5초 대기
-      await Future.delayed(Duration(seconds: 4));
+      // await Future.delayed(Duration(seconds: 4));
 
       final responseData = jsonDecode(response.body);
       final user = User.fromJson(responseData);
