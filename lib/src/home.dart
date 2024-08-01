@@ -1,269 +1,292 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sw/core/provider/category_state.dart';
-import 'package:sw/core/provider/search_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class Petition {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
+  final String title;
+  final String content;
+  final int participants;
+  final int agree;
+  final int disagree;
+
+  Petition({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
+    required this.title,
+    required this.content,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
+  });
+
+  factory Petition.fromJson(Map<String, dynamic> json) {
+    return Petition(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
+      title: json['title'],
+      content: json['content'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
+    );
+  }
+}
+
+final filterProvider = StateProvider<int>((ref) => 0);
+
+final postsInProgressProvider = FutureProvider<List<Petition>>((ref) async {
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 0:
+      filterState = 'agree';
+      break;
+    case 1:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state1'));
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data.map((json) => Petition.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load posts in progress');
+  }
+});
+
+final postsWaitingProvider = FutureProvider<List<Petition>>((ref) async {
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 1:
+      filterState = 'agree';
+      break;
+    case 2:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state2'));
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data.map((json) => Petition.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load waiting posts');
+  }
+});
+
+final postsCompletedProvider = FutureProvider<List<Petition>>((ref) async {
+  final filter = ref.watch(filterProvider);
+  String filterState;
+
+  switch (filter) {
+    case 1:
+      filterState = 'agree';
+      break;
+    case 2:
+      filterState = 'expiry';
+      break;
+    default:
+      filterState = 'createdDate';
+  }
+
+  final response = await http.get(Uri.parse(
+      'http://52.79.169.32:8080/api/posts/sorted/$filterState/state4'));
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data.map((json) => Petition.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load completed posts');
+  }
+});
 
 class Home extends ConsumerWidget {
   final TextEditingController _searchController = TextEditingController();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final searchNotifier = ref.watch(searchProvider.notifier);
-    final categoryState = ref.watch(categoryProvider);
-    final categoryNotifier = ref.watch(categoryProvider.notifier);
-    String searchValue = '';
-    String categoryValue = '';
+    final selectedFilter = ref.watch(filterProvider);
+
     void goSearch() {
       _searchController.clear();
       ref.read(filterProvider.notifier).state = 0;
       context.push('/search');
     }
 
+    Future<void> refreshData() async {
+      ref.refresh(postsInProgressProvider);
+      ref.refresh(postsWaitingProvider);
+      ref.refresh(postsCompletedProvider);
+    }
+
     return Scaffold(
-      body: ListView(
+      body: Column(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Search',
-                                suffixIcon: IconButton(
-                                  icon: Icon(Icons.search),
-                                  onPressed: () {
-                                    searchValue = _searchController.text;
-                                    searchNotifier.updateSearch(searchValue);
-                                    goSearch();
-                                  },
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            DropdownButton<String>(
-                              icon: Icon(Icons.filter_list),
-                              value: categoryValue.isNotEmpty
-                                  ? categoryValue
-                                  : null,
-                              items: <String>[
-                                '시설',
-                                '제휴',
-                                '교과',
-                                '행사'
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                newValue!;
-                                categoryNotifier.updateCategory(newValue);
-                              },
-                              hint: categoryState.selectedCategory != ''
-                                  ? Text(categoryState.selectedCategory!)
-                                  : Text('필터 하고 싶은 카테고리를 선택하세요'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final selectedFilter = ref.watch(filterProvider);
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Row(
-                          children: [
-                            Radio<int>(
-                              value: 0,
-                              groupValue: selectedFilter,
-                              onChanged: (int? value) {
-                                ref.read(filterProvider.notifier).state =
-                                    value!;
-                              },
-                            ),
-                            Text('최다동의순'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Radio<int>(
-                              value: 1,
-                              groupValue: selectedFilter,
-                              onChanged: (int? value) {
-                                ref.read(filterProvider.notifier).state =
-                                    value!;
-                              },
-                            ),
-                            Text('만료임박순'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Radio<int>(
-                              value: 2,
-                              groupValue: selectedFilter,
-                              onChanged: (int? value) {
-                                ref.read(filterProvider.notifier).state =
-                                    value!;
-                              },
-                            ),
-                            Text('최신순'),
-                          ],
-                        ),
-                      ],
-                    );
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () {
+                    // 검색 로직을 처리하세요.
+                    goSearch();
                   },
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 20),
-                child: Text(
-                  '동의 진행 중',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              Container(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 10),
-                      PetitionCard(
-                        title: '도서관 에어컨',
-                        description: '도서관 에어컨 너무 약해요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 화장실',
-                        description: '화장실이 너무 더러워요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 자리',
-                        description: '시험기간에 반납이 안됩니다ㅠ',
-                        category: '시설',
-                        agreement: 80,
-                        disagreement: 20,
-                      ),
-                    ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                FilterRadio(
+                  label: '최다동의순',
+                  value: 0,
+                  groupValue: selectedFilter,
+                  onChanged: (int? value) {
+                    ref.read(filterProvider.notifier).state = value!;
+                  },
+                ),
+                FilterRadio(
+                  label: '만료임박순',
+                  value: 1,
+                  groupValue: selectedFilter,
+                  onChanged: (int? value) {
+                    ref.read(filterProvider.notifier).state = value!;
+                  },
+                ),
+                FilterRadio(
+                  label: '최신순',
+                  value: 2,
+                  groupValue: selectedFilter,
+                  onChanged: (int? value) {
+                    ref.read(filterProvider.notifier).state = value!;
+                  },
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: refreshData,
+              child: ListView(
+                children: [
+                  PetitionSection(
+                    title: '답변 진행 중',
+                    provider: postsInProgressProvider,
                   ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 20),
-                child: Text(
-                  '동의 대기 중',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-              ),
-              Container(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 10),
-                      PetitionCard(
-                        title: '도서관 에어컨',
-                        description: '도서관 에어컨 너무 약해요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 화장실',
-                        description: '화장실이 너무 더러워요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 자리',
-                        description: '시험기간에 반납이 안됩니다ㅠ',
-                        category: '시설',
-                        agreement: 80,
-                        disagreement: 20,
-                      ),
-                    ],
+                  PetitionSection(
+                    title: '답변 대기 중',
+                    provider: postsWaitingProvider,
                   ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 20),
-                child: Text(
-                  '동의 완료',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-              ),
-              Container(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 10),
-                      PetitionCard(
-                        title: '도서관 에어컨',
-                        description: '도서관 에어컨 너무 약해요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 화장실',
-                        description: '화장실이 너무 더러워요',
-                        category: '시설',
-                        agreement: 70,
-                        disagreement: 30,
-                      ),
-                      PetitionCard(
-                        title: '도서관 자리',
-                        description: '시험기간에 반납이 안됩니다ㅠ',
-                        category: '시설',
-                        agreement: 80,
-                        disagreement: 20,
-                      ),
-                    ],
+                  PetitionSection(
+                    title: '답변 완료',
+                    provider: postsCompletedProvider,
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FilterRadio extends StatelessWidget {
+  final String label;
+  final int value;
+  final int groupValue;
+  final ValueChanged<int?> onChanged;
+
+  FilterRadio({
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Radio<int>(
+          value: value,
+          groupValue: groupValue,
+          onChanged: onChanged,
+        ),
+        Text(label),
+      ],
+    );
+  }
+}
+
+class PetitionSection extends ConsumerWidget {
+  final String title;
+  final FutureProvider<List<Petition>> provider;
+
+  PetitionSection({required this.title, required this.provider});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final petitionsAsyncValue = ref.watch(provider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          petitionsAsyncValue.when(
+            data: (petitions) => Container(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: petitions.length,
+                itemBuilder: (context, index) {
+                  final petition = petitions[index];
+                  return PetitionCard(
+                    title: petition.title,
+                    description: petition.content,
+                    category: petition.postCategory,
+                    agreement: petition.agree,
+                    disagreement: petition.disagree,
+                    postId: petition.postId,
+                  );
+                },
+              ),
+            ),
+            loading: () => Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(child: Text('Error: $error')),
           ),
         ],
       ),
@@ -277,6 +300,7 @@ class PetitionCard extends StatelessWidget {
   final String category;
   final int agreement;
   final int disagreement;
+  final int postId;
 
   PetitionCard({
     required this.title,
@@ -284,58 +308,84 @@ class PetitionCard extends StatelessWidget {
     required this.category,
     required this.agreement,
     required this.disagreement,
+    required this.postId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.sizeOf(context).width * 0.8,
-      child: Card(
-        margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Chip(label: Text(category)),
-                ],
-              ),
-              SizedBox(height: 8),
-              Text(description),
-              SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.thumb_down, color: Colors.red),
-                      SizedBox(width: 5),
-                      Text('$disagreement%'),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.thumb_up, color: Colors.blue),
-                      SizedBox(width: 5),
-                      Text('$agreement%'),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: disagreement / 100,
-                backgroundColor: Colors.blue,
-                color: Colors.red,
-              ),
-            ],
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고합니다'
+    };
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/postDetail/$postId');
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: Card(
+          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.sizeOf(context).width * 0.4,
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    Chip(
+                        label: SizedBox(
+                            width: 70,
+                            child: Text(
+                              categoryMapping[category] ?? category,
+                              textAlign: TextAlign.center,
+                            ))),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(description),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.thumb_down, color: Colors.red),
+                        SizedBox(width: 5),
+                        Text('$disagreement%'),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.thumb_up, color: Colors.blue),
+                        SizedBox(width: 5),
+                        Text('$agreement%'),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: disagreement / 100,
+                  backgroundColor: Colors.blue,
+                  color: Colors.red,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -343,5 +393,3 @@ class PetitionCard extends StatelessWidget {
   }
 }
 
-// 추가 상태 프로바이더 정의
-final filterProvider = StateProvider<int>((ref) => 0);

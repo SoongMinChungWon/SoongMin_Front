@@ -1,13 +1,101 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sw/src/custom_drawer.dart';
-import 'package:sw/src/home.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:sw/core/provider/login_provider.dart';
+import 'package:sw/src/custom_drawer.dart'; // Provider가 정의된 경로를 명확히 해주세요.
 
-class Agreement extends ConsumerWidget {
-  final GlobalKey<ScaffoldState> _scaffoldKey9 = GlobalKey<ScaffoldState>();
+class Petition {
+  final int postId;
+  final int userId;
+  final String postCategory;
+  final String postType;
+  final String title;
+  final String content;
+  final int participants;
+  final int agree;
+  final int disagree;
+
+  Petition({
+    required this.postId,
+    required this.userId,
+    required this.postCategory,
+    required this.postType,
+    required this.title,
+    required this.content,
+    required this.participants,
+    required this.agree,
+    required this.disagree,
+  });
+
+  factory Petition.fromJson(Map<String, dynamic> json) {
+    return Petition(
+      postId: json['postId'],
+      userId: json['userId'],
+      postCategory: json['postCategory'],
+      postType: json['postType'],
+      title: json['title'],
+      content: json['content'],
+      participants: json['participants'],
+      agree: json['agree'],
+      disagree: json['disagree'],
+    );
+  }
+}
+
+class Agreement extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _AgreementState createState() => _AgreementState();
+}
+
+class _AgreementState extends ConsumerState<Agreement> {
+  final GlobalKey<ScaffoldState> _scaffoldKey9 = GlobalKey<ScaffoldState>();
+  int selectedFilter = 0;
+  List<Petition> posts = [];
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts(selectedFilter);
+  }
+
+  Future<void> fetchPosts(int filter) async {
+    final loginInfo = ref.read(loginProvider);
+    setState(() {
+      isLoading = true;
+      hasError = false;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(
+          'http://52.79.169.32:8080/api/mypage/agree-posts/${loginInfo!.userId}'));
+      print(response.body);
+      if (response.statusCode == 200) {
+        List<dynamic> data =
+            jsonDecode(utf8.decode(response.bodyBytes)); // UTF-8로 디코딩
+        setState(() {
+          posts = data.map((json) => Petition.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey9,
       appBar: AppBar(
@@ -19,7 +107,6 @@ class Agreement extends ConsumerWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () {
-            ref.read(filterProvider.notifier).state = 0;
             context.pop();
           },
         ),
@@ -27,40 +114,72 @@ class Agreement extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Notification 버튼을 눌렀을 때 오른쪽에서 Drawer 열기
               _scaffoldKey9.currentState?.openEndDrawer();
             },
           ),
         ],
       ),
-      endDrawer: CustomDrawer(),
-      body: Expanded(
-        child: ListView(
-          children: [
-            PetitionCard(
-              title: '도서관 에어컨',
-              description: '도서관 에어컨 너무 약해요',
-              category: '시설',
-              agreement: 70,
-              disagreement: 30,
+      endDrawer: CustomDrawer(), // CustomDrawer 사용을 고려하세요.
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                fetchPosts(selectedFilter);
+              },
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : hasError
+                      ? Center(child: Text('Error loading posts'))
+                      : ListView.builder(
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) {
+                            final petition = posts[index];
+                            return PetitionCard(
+                              title: petition.title,
+                              description: petition.content,
+                              category: petition.postCategory,
+                              agreement: petition.agree,
+                              disagreement: petition.disagree,
+                            );
+                          },
+                        ),
             ),
-            PetitionCard(
-              title: '도서관 화장실',
-              description: '화장실이 너무 더러워요',
-              category: '시설',
-              agreement: 70,
-              disagreement: 30,
-            ),
-            PetitionCard(
-              title: '도서관 자리',
-              description: '시험기간에 반납이 안됩니다ㅠ',
-              category: '시설',
-              agreement: 80,
-              disagreement: 20,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class FilterRadio extends StatelessWidget {
+  final int value;
+  final int groupValue;
+  final String label;
+  final ValueChanged<int> onChanged;
+
+  const FilterRadio({
+    required this.value,
+    required this.groupValue,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Radio<int>(
+          value: value,
+          groupValue: groupValue,
+          onChanged: (int? newValue) {
+            if (newValue != null) {
+              onChanged(newValue);
+            }
+          },
+        ),
+        Text(label),
+      ],
     );
   }
 }
