@@ -404,8 +404,6 @@ class State2Detail extends StatelessWidget {
                     return Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No comments'));
                   }
 
                   final comments = snapshot.data!;
@@ -624,8 +622,6 @@ class State3Detail extends StatelessWidget {
                     return Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No comments'));
                   }
 
                   final comments = snapshot.data!;
@@ -845,8 +841,6 @@ class State4Detail extends StatelessWidget {
                     return Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No comments'));
                   }
 
                   final comments = snapshot.data!;

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:sw/core/provider/login_provider.dart';
-import 'package:sw/src/custom_drawer.dart'; // Provider가 정의된 경로를 명확히 해주세요.
+import 'dart:convert';
+
+import 'package:sw/src/custom_drawer.dart';
 
 class Petition {
   final int postId;
@@ -70,9 +71,10 @@ class _ParticipantsState extends ConsumerState<Participants> {
     });
 
     try {
-      final response = await http.get(Uri.parse(
-          'http://52.79.169.32:8080/api/mypage/comment-posts//${loginInfo!.userId}'));
+      final response = await http.get(
+          Uri.parse('http://52.79.169.32:8080/api/mypage/comment-posts/1'));
       print(response.body);
+
       if (response.statusCode == 200) {
         List<dynamic> data =
             jsonDecode(utf8.decode(response.bodyBytes)); // UTF-8로 디코딩
@@ -99,9 +101,11 @@ class _ParticipantsState extends ConsumerState<Participants> {
     return Scaffold(
       key: _scaffoldKey7,
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           '내가 참여한 청원',
           style: TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
@@ -111,6 +115,12 @@ class _ParticipantsState extends ConsumerState<Participants> {
           },
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              context.push('/search');
+            },
+          ),
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
@@ -141,6 +151,7 @@ class _ParticipantsState extends ConsumerState<Participants> {
                               category: petition.postCategory,
                               agreement: petition.agree,
                               disagreement: petition.disagree,
+                              postId: petition.postId,
                             );
                           },
                         ),
@@ -190,6 +201,7 @@ class PetitionCard extends StatelessWidget {
   final String category;
   final int agreement;
   final int disagreement;
+  final int postId;
 
   PetitionCard({
     required this.title,
@@ -197,56 +209,91 @@ class PetitionCard extends StatelessWidget {
     required this.category,
     required this.agreement,
     required this.disagreement,
+    required this.postId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Spacer(),
-                Chip(label: Text(category)),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(description),
-            SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.thumb_down, color: Colors.red),
-                    SizedBox(width: 5),
-                    Text('$disagreement%'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.thumb_up, color: Colors.blue),
-                    SizedBox(width: 5),
-                    Text('$agreement%'),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: disagreement / 100,
-              backgroundColor: Colors.blue,
-              color: Colors.red,
-            ),
-          ],
+    final Map<String, String> categoryMapping = {
+      'facility': '시설',
+      'event': '행사',
+      'partnership': '제휴',
+      'study': '교과',
+      'report': '신고 합니다'
+    };
+
+    final int totalVotes = agreement + disagreement;
+    final double agreementPercentage =
+        totalVotes > 0 ? (agreement / totalVotes) * 100 : 0;
+    final double disagreementPercentage =
+        totalVotes > 0 ? (disagreement / totalVotes) * 100 : 0;
+
+    return GestureDetector(
+      onTap: () {
+        context.push('/postDetail/$postId');
+      },
+      child: Card(
+        margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width * 0.6,
+                    child: Text(
+                      title,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  Chip(
+                      label: SizedBox(
+                          width: 70,
+                          child: Text(
+                            categoryMapping[category] ?? category,
+                            textAlign: TextAlign.center,
+                          ))),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                description,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.thumb_down, color: Colors.red),
+                      SizedBox(width: 5),
+                      Text('${disagreementPercentage.toStringAsFixed(1)}%'),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.thumb_up, color: Colors.blue),
+                      SizedBox(width: 5),
+                      Text('${agreementPercentage.toStringAsFixed(1)}%'),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: totalVotes > 0 ? disagreement / totalVotes : 0,
+                backgroundColor: Colors.blue,
+                color: Colors.red,
+              ),
+            ],
+          ),
         ),
       ),
     );

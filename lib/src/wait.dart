@@ -108,9 +108,11 @@ class _WaitState extends State<Wait> {
     return Scaffold(
       key: _scaffoldKey1,
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           '답변 대기 청원',
           style: TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         backgroundColor: Color(0xff87ceeb),
         leading: IconButton(
@@ -120,11 +122,21 @@ class _WaitState extends State<Wait> {
           },
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {
-              _scaffoldKey1.currentState?.openEndDrawer();
-            },
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  context.push('/search');
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.notifications),
+                onPressed: () {
+                  _scaffoldKey1.currentState?.openEndDrawer();
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -262,6 +274,12 @@ class PetitionCard extends StatelessWidget {
       'report': '신고 합니다'
     };
 
+    final int totalVotes = agreement + disagreement;
+    final double agreementPercentage =
+        totalVotes > 0 ? (agreement / totalVotes) * 100 : 0;
+    final double disagreementPercentage =
+        totalVotes > 0 ? (disagreement / totalVotes) * 100 : 0;
+
     return GestureDetector(
       onTap: () {
         context.push('/postDetail/$postId');
@@ -295,7 +313,11 @@ class PetitionCard extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 8),
-              Text(description),
+              Text(
+              description,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
               SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -304,21 +326,21 @@ class PetitionCard extends StatelessWidget {
                     children: [
                       Icon(Icons.thumb_down, color: Colors.red),
                       SizedBox(width: 5),
-                      Text('$disagreement%'),
+                      Text('${disagreementPercentage.toStringAsFixed(1)}%'),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.thumb_up, color: Colors.blue),
                       SizedBox(width: 5),
-                      Text('$agreement%'),
+                      Text('${agreementPercentage.toStringAsFixed(1)}%'),
                     ],
                   ),
                 ],
               ),
               SizedBox(height: 8),
               LinearProgressIndicator(
-                value: disagreement / 100,
+                value: totalVotes > 0 ? disagreement / totalVotes : 0,
                 backgroundColor: Colors.blue,
                 color: Colors.red,
               ),

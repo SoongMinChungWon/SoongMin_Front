@@ -13,48 +13,47 @@ class LoginMain extends ConsumerWidget {
   Future<void> _login(BuildContext context, WidgetRef ref) async {
     final String id = _idController.text;
     final String password = _passwordController.text;
+    context.go('/main');
+    // try {
+    //   final response = await http.post(
+    //     Uri.parse('http://localhost/api/login'), // 서버 URL로 변경
+    //     headers: <String, String>{
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: jsonEncode(<String, String>{
+    //       'id': id,
+    //       'password': password,
+    //     }),
+    //   );
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://52.79.169.32:8080/api/login'), // 서버 URL로 변경
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(<String, String>{
-          'id': id,
-          'password': password,
-        }),
-      );
+    //   final responseData = jsonDecode(response.body);
+    //   final user = User.fromJson(responseData);
+    //   // // 로그인 성공 시 상태 업데이트
+    //   print(responseData);
+    //   ref.read(loginProvider.notifier).setUser(user);
 
-      final responseData = jsonDecode(response.body);
-      final user = User.fromJson(responseData);
-      // // 로그인 성공 시 상태 업데이트
-      print(responseData);
-      ref.read(loginProvider.notifier).setUser(user);
-
-      if (response.statusCode == 200) {
-        // 로그인 성공, 메인 페이지로 이동
-        context.go('/main');
-      } else {
-        // 로그인 실패 처리
-        print('로그인 실패: ${response.reasonPhrase}');
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('로그인 실패'),
-            content: Text('자격 증명을 확인하고 다시 시도하세요.\n상세 정보: ${response.body}'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('확인'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      print('에러 발생: $e');
-    }
+    //   if (response.statusCode == 200) {
+    //     // 로그인 성공, 메인 페이지로 이동
+    //   } else {
+    //     // 로그인 실패 처리
+    //     print('로그인 실패: ${response.reasonPhrase}');
+    //     showDialog(
+    //       context: context,
+    //       builder: (context) => AlertDialog(
+    //         title: Text('로그인 실패'),
+    //         content: Text('자격 증명을 확인하고 다시 시도하세요.\n상세 정보: ${response.body}'),
+    //         actions: [
+    //           TextButton(
+    //             onPressed: () => Navigator.of(context).pop(),
+    //             child: Text('확인'),
+    //           ),
+    //         ],
+    //       ),
+    //     );
+    //   }
+    // } catch (e) {
+    //   print('에러 발생: $e');
+    // }
   }
 
   @override

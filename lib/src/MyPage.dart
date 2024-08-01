@@ -17,9 +17,11 @@ class MyPage extends ConsumerWidget {
     return Scaffold(
       key: _scaffoldKey3, // Scaffold의 key로 설정
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           navState.title,
           style: TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -29,6 +31,12 @@ class MyPage extends ConsumerWidget {
           },
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              context.push('/search');
+            },
+          ),
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
@@ -74,7 +82,7 @@ class MyPage extends ConsumerWidget {
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                         Text(
-                          loginInfo!.loginId,
+                          loginInfo?.loginId ?? '20201830',
                           style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                       ],
