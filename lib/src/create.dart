@@ -87,112 +87,119 @@ class _CreateState extends ConsumerState<Create> {
         ],
       ),
       endDrawer: CustomDrawer(),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                hintText: '제목',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              onChanged: (value) {
-                petitionNotifier.updateTitle(value);
-              },
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        DropdownButton<String>(
-                          icon: Icon(Icons.filter_list),
-                          value: _categoryValue,
-                          items: _categoryMapping.keys
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _categoryValue = newValue;
-                            });
-                            if (newValue != null) {
-                              categoryNotifier.updateCategory(newValue);
-                            }
-                          },
-                          hint: categoryState.selectedCategory != null &&
-                                  categoryState.selectedCategory!.isNotEmpty
-                              ? Text(
-                                  categoryState.selectedCategory!,
-                                  style: TextStyle(color: Colors.black),
-                                )
-                              : Text('카테고리',
-                                  style: TextStyle(color: Colors.black)),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.push('/ai');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xff1A4957),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: Text(
-                            'AI유사글찾기',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: '제목',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _contentController,
-              maxLines: 12,
-              decoration: InputDecoration(
-                hintText: '동의가 70%가 넘으면 작성한 글이 학교 측으로 전달되니 참고해주세요!',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                onChanged: (value) {
+                  petitionNotifier.updateTitle(value);
+                },
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          DropdownButton<String>(
+                            icon: Icon(Icons.filter_list),
+                            value: _categoryValue,
+                            items: _categoryMapping.keys
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _categoryValue = newValue;
+                              });
+                              if (newValue != null) {
+                                categoryNotifier.updateCategory(newValue);
+                              }
+                            },
+                            hint: categoryState.selectedCategory != null &&
+                                    categoryState.selectedCategory!.isNotEmpty
+                                ? Text(
+                                    categoryState.selectedCategory!,
+                                    style: TextStyle(color: Colors.black),
+                                  )
+                                : Text('카테고리',
+                                    style: TextStyle(color: Colors.black)),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.push('/ai');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xff1A4957),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Text(
+                              'AI유사글찾기',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _contentController,
+                maxLines: 12,
+                decoration: InputDecoration(
+                  hintText: '동의가 70%가 넘으면 작성한 글이 학교 측으로 전달되니 참고해주세요!',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                onChanged: (value) {
+                  petitionNotifier.updateContent(value);
+                },
+              ),
+              SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () async {
+
+                  await _submitPetition();
+                },
+                icon: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ),
+                label: Text('청원 게시하기', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xff1A4957),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  minimumSize: Size(double.infinity, 50),
                 ),
               ),
-              onChanged: (value) {
-                petitionNotifier.updateContent(value);
-              },
-            ),
-            Spacer(),
-            ElevatedButton.icon(
-              onPressed: () async {
-                await _submitPetition();
-              },
-              icon: Icon(
-                Icons.add,
-                color: Colors.white,
-              ),
-              label: Text('청원 게시하기', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xff1A4957),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                minimumSize: Size(double.infinity, 50),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -204,7 +211,7 @@ class _CreateState extends ConsumerState<Create> {
     final String title = petitionState['title']!;
     final String content = petitionState['content']!;
     final String? category = _categoryMapping[_categoryValue];
-
+_categoryValue='';
     if (title.isEmpty || content.isEmpty || category == null) {
       // 적절한 오류 처리를 해주세요.
       ScaffoldMessenger.of(context).showSnackBar(
