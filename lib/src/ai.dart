@@ -215,7 +215,7 @@ class PetitionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.6,
+                  width: MediaQuery.sizeOf(context).width * 0.5,
                   child: Text(
                     title,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

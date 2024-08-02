@@ -145,7 +145,6 @@ class State1Detail extends HookWidget {
     final remainingDays = endDate.difference(DateTime.now()).inDays;
     final formattedStartDate = DateFormat('yyyy.MM.dd').format(post.createdAt);
     final formattedEndDate = DateFormat('yyyy.MM.dd').format(endDate);
-    var total = totalVotes.value == 0 ? 1 : totalVotes.value;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -201,7 +200,7 @@ class State1Detail extends HookWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: LinearProgressIndicator(
-                    value: agreeVotes.value / total,
+                    value: agreeVotes.value / 30,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlue),
                   ),
@@ -246,11 +245,8 @@ class State1Detail extends HookWidget {
                 onPressed: () async {
                   try {
                     await addPostAgree(post.postId, myUserId);
-                    useState(() {
-                      agreeVotes.value++;
-                      totalVotes.value++;
-                    });
-
+                    agreeVotes.value++;
+                    totalVotes.value++;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('동의에 성공했습니다')),
                     );
@@ -290,6 +286,8 @@ class State2Detail extends HookWidget {
   Widget build(BuildContext context) {
     final TextEditingController commentController = useTextEditingController();
     final comments = useState<List<Comment>>([]);
+    final agreeVotes = useState(post.agree);
+    final disagreeVotes = useState(post.disagree);
 
     final isAddingComment = useState(false);
     Future<void> fetchCommentsList() async {
@@ -387,6 +385,8 @@ class State2Detail extends HookWidget {
                     onPressed: () async {
                       try {
                         await addPostDisagree(post.postId, myUserId);
+                        disagreeVotes.value++;
+                        totalVotes++;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('비동의에 성공했습니다')),
                         );
@@ -446,6 +446,8 @@ class State2Detail extends HookWidget {
                     onPressed: () async {
                       try {
                         await addPostAgree(post.postId, myUserId);
+                        agreeVotes.value++;
+                        totalVotes++;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('동의에 성공했습니다')),
                         );
@@ -524,6 +526,8 @@ class State3Detail extends HookWidget {
     final TextEditingController commentController = useTextEditingController();
     final comments = useState<List<Comment>>([]);
     final isAddingComment = useState(false);
+    final agreeVotes = useState(post.agree);
+    final disagreeVotes = useState(post.disagree);
 
     // 댓글 목록을 가져오는 함수
     Future<void> fetchCommentsList() async {
@@ -632,7 +636,8 @@ class State3Detail extends HookWidget {
                     onPressed: () async {
                       try {
                         await addPostDisagree(post.postId, myUserId);
-
+                        disagreeVotes.value++;
+                        totalVotes++;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('비동의에 성공했습니다')),
                         );
@@ -692,7 +697,8 @@ class State3Detail extends HookWidget {
                     onPressed: () async {
                       try {
                         await addPostAgree(post.postId, myUserId);
-
+                        agreeVotes.value++;
+                        totalVotes++;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('동의에 성공했습니다')),
                         );
@@ -772,6 +778,10 @@ class State4Detail extends HookWidget {
   Widget build(BuildContext context) {
     // useState를 사용하여 comments 상태를 관리
     final comments = useState<List<Comment>>([]);
+    var totalVotes = post.agree + post.disagree;
+    if (totalVotes == 0) {
+      totalVotes = 1;
+    }
 
     // 댓글을 가져오는 함수
     Future<void> _fetchComments() async {
@@ -885,7 +895,7 @@ class State4Detail extends HookWidget {
                     style: TextStyle(color: Colors.grey),
                   ),
                   Text(
-                    '${post.agree + post.disagree} votes',
+                    '${totalVotes} votes',
                     style: TextStyle(color: Colors.black),
                   ),
                 ],
@@ -918,7 +928,7 @@ class State4Detail extends HookWidget {
                             height: 25,
                             child: LinearProgressIndicator(
                               value: post.disagree /
-                                  (post.agree + post.disagree).toDouble(),
+                                  (totalVotes).toDouble(),
                               backgroundColor: Colors.lightBlue[300],
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(Colors.red),
@@ -932,7 +942,7 @@ class State4Detail extends HookWidget {
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
                                 child: Text(
-                                  '${((post.disagree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                                  '${((post.disagree / (totalVotes)) * 100).toStringAsFixed(1)}%',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold),
@@ -941,7 +951,7 @@ class State4Detail extends HookWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: Text(
-                                  '${((post.agree / (post.agree + post.disagree)) * 100).toStringAsFixed(1)}%',
+                                  '${((post.agree / (totalVotes)) * 100).toStringAsFixed(1)}%',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold),
